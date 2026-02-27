@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useTheme } from "next-themes"
 import { AssumptionsPanel } from "@/components/simulator/assumptions-panel"
 import { ResultsPanel } from "@/components/simulator/results-panel"
 import {
@@ -9,11 +10,55 @@ import {
   type SimConfig,
   type SimulationResult,
 } from "@/lib/simulation"
+import { useI18n, type Locale } from "@/lib/i18n"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
+import { Sun, Moon, Globe } from "lucide-react"
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      className="gap-1.5"
+      aria-label="Toggle theme"
+    >
+      <Sun className="size-4 dark:hidden" />
+      <Moon className="size-4 hidden dark:block" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  )
+}
+
+function LanguageToggle() {
+  const { locale, setLocale } = useI18n()
+
+  const toggle = () => {
+    const next: Locale = locale === "en" ? "es" : "en"
+    setLocale(next)
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={toggle}
+      className="gap-1.5 uppercase tabular-nums"
+      aria-label="Toggle language"
+    >
+      <Globe className="size-4" />
+      {locale}
+    </Button>
+  )
+}
 
 export default function SimulatorPage() {
   const [config, setConfig] = useState<SimConfig>(getDefaultConfig)
   const [result, setResult] = useState<SimulationResult | null>(null)
+  const { t } = useI18n()
 
   const handleChange = useCallback((updates: Partial<SimConfig>) => {
     setConfig((prev) => ({ ...prev, ...updates }))
@@ -29,13 +74,19 @@ export default function SimulatorPage() {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-lg font-bold text-foreground text-balance">
-              Simulador de Retiro
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Estrategia Patrimonial Japan / Mexico
-            </p>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-lg font-bold text-foreground text-balance">
+                {t("header.title")}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t("header.subtitle")}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </header>
@@ -64,13 +115,13 @@ export default function SimulatorPage() {
               <div className="flex items-center justify-center rounded-lg border border-dashed border-border bg-card/50 p-12">
                 <div className="text-center">
                   <p className="text-sm font-medium text-muted-foreground">
-                    Configura tus supuestos y presiona
+                    {t("empty.configure")}
                   </p>
                   <p className="text-lg font-semibold text-foreground mt-1">
-                    Simular
+                    {t("empty.simulate")}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    para ver la proyeccion de tu plan de retiro
+                    {t("empty.toSee")}
                   </p>
                 </div>
               </div>

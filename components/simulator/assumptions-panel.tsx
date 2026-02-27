@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import type { SimConfig } from "@/lib/simulation"
+import { useI18n } from "@/lib/i18n"
 import { Play } from "lucide-react"
 
 interface AssumptionsPanelProps {
@@ -74,24 +75,26 @@ export function AssumptionsPanel({
   onChange,
   onSimulate,
 }: AssumptionsPanelProps) {
+  const { t } = useI18n()
+
   return (
     <div className="flex flex-col gap-4">
       {/* General Assumptions */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">
-            Supuestos Generales
+            {t("assumptions.general")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <NumberField
-              label="Anio base"
+              label={t("assumptions.baseYear")}
               value={config.yearBase}
               onChange={(v) => onChange({ yearBase: v })}
             />
             <NumberField
-              label="Anio fin"
+              label={t("assumptions.endYear")}
               value={config.yearEnd}
               onChange={(v) => onChange({ yearEnd: v })}
             />
@@ -99,16 +102,16 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Fase 1 - Acumulacion
+              {t("assumptions.phase1")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <NumberField
-                label="Inicio"
+                label={t("assumptions.start")}
                 value={config.phase1Start}
                 onChange={(v) => onChange({ phase1Start: v })}
               />
               <NumberField
-                label="Fin"
+                label={t("assumptions.end")}
                 value={config.phase1End}
                 onChange={(v) => onChange({ phase1End: v })}
               />
@@ -117,16 +120,16 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Fase 2 - Transicion
+              {t("assumptions.phase2")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <NumberField
-                label="Inicio"
+                label={t("assumptions.start")}
                 value={config.phase2Start}
                 onChange={(v) => onChange({ phase2Start: v })}
               />
               <NumberField
-                label="Fin"
+                label={t("assumptions.end")}
                 value={config.phase2End}
                 onChange={(v) => onChange({ phase2End: v })}
               />
@@ -135,16 +138,16 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Fase 3 - Retiros Avanzados
+              {t("assumptions.phase3")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <NumberField
-                label="Inicio"
+                label={t("assumptions.start")}
                 value={config.phase3Start}
                 onChange={(v) => onChange({ phase3Start: v })}
               />
               <NumberField
-                label="Fin"
+                label={t("assumptions.end")}
                 value={config.phase3End}
                 onChange={(v) => onChange({ phase3End: v })}
               />
@@ -157,40 +160,40 @@ export function AssumptionsPanel({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">
-            Tasas y Rendimientos
+            {t("assumptions.rates")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <PercentField
-              label="Inflacion Mexico"
+              label={t("assumptions.inflationMx")}
               value={config.inflationMx}
               onChange={(v) => onChange({ inflationMx: v })}
             />
             <PercentField
-              label="Inflacion Japon"
-              value={config.inflationJp}
-              onChange={(v) => onChange({ inflationJp: v })}
+              label={t("assumptions.inflationOther")}
+              value={config.inflationOther}
+              onChange={(v) => onChange({ inflationOther: v })}
             />
           </div>
           <div className="border-t border-border pt-3 grid grid-cols-2 gap-3">
             <PercentField
-              label="Rendimiento Privada"
+              label={t("assumptions.returnPrivada")}
               value={config.returnPrivada}
               onChange={(v) => onChange({ returnPrivada: v })}
             />
             <PercentField
-              label="Rendimiento PPR"
+              label={t("assumptions.returnPPR")}
               value={config.returnPPR}
               onChange={(v) => onChange({ returnPPR: v })}
             />
             <PercentField
-              label="Rendimiento Afore El"
+              label={t("assumptions.returnAforeEl")}
               value={config.returnAforeEl}
               onChange={(v) => onChange({ returnAforeEl: v })}
             />
             <PercentField
-              label="Rendimiento Afore Ella"
+              label={t("assumptions.returnAforeElla")}
               value={config.returnAforeElla}
               onChange={(v) => onChange({ returnAforeElla: v })}
             />
@@ -202,17 +205,17 @@ export function AssumptionsPanel({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">
-            Aportaciones y Eventos
+            {t("assumptions.contributions")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           {/* Initial Balances */}
           <p className="text-xs font-medium text-muted-foreground">
-            Saldos iniciales
+            {t("assumptions.initialBalances")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <NumberField
-              label="Privada"
+              label={t("assumptions.private")}
               value={config.initialPrivada}
               onChange={(v) => onChange({ initialPrivada: v })}
               suffix="MXN"
@@ -224,13 +227,13 @@ export function AssumptionsPanel({
               suffix="MXN"
             />
             <NumberField
-              label="Afore El"
+              label={t("assumptions.aforeHis")}
               value={config.initialAforeEl}
               onChange={(v) => onChange({ initialAforeEl: v })}
               suffix="MXN"
             />
             <NumberField
-              label="Afore Ella"
+              label={t("assumptions.aforeHer")}
               value={config.initialAforeElla}
               onChange={(v) => onChange({ initialAforeElla: v })}
               suffix="MXN"
@@ -239,17 +242,17 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Aportaciones mensuales
+              {t("assumptions.monthlyContributions")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <NumberField
-                label="PPR mensual"
+                label={t("assumptions.pprMonthly")}
                 value={config.pprMonthly}
                 onChange={(v) => onChange({ pprMonthly: v })}
                 suffix="MXN"
               />
               <NumberField
-                label="Afore Ella mensual"
+                label={t("assumptions.aforeHerMonthly")}
                 value={config.aforeEllaMonthly}
                 onChange={(v) => onChange({ aforeEllaMonthly: v })}
                 suffix="MXN"
@@ -257,7 +260,7 @@ export function AssumptionsPanel({
             </div>
             <div className="mt-2">
               <NumberField
-                label="Afore Ella hasta anio"
+                label={t("assumptions.aforeHerUntilYear")}
                 value={config.aforeEllaEndYear}
                 onChange={(v) => onChange({ aforeEllaEndYear: v })}
               />
@@ -266,22 +269,22 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Privada - Tramo 1
+              {t("assumptions.privateTranche1")}
             </p>
             <div className="grid grid-cols-3 gap-3">
               <NumberField
-                label="Monto mensual"
+                label={t("assumptions.monthlyAmount")}
                 value={config.privadaTramo1Amount}
                 onChange={(v) => onChange({ privadaTramo1Amount: v })}
                 suffix="MXN"
               />
               <NumberField
-                label="Desde"
+                label={t("assumptions.from")}
                 value={config.privadaTramo1Start}
                 onChange={(v) => onChange({ privadaTramo1Start: v })}
               />
               <NumberField
-                label="Hasta"
+                label={t("assumptions.until")}
                 value={config.privadaTramo1End}
                 onChange={(v) => onChange({ privadaTramo1End: v })}
               />
@@ -290,22 +293,22 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Privada - Tramo 2
+              {t("assumptions.privateTranche2")}
             </p>
             <div className="grid grid-cols-3 gap-3">
               <NumberField
-                label="Monto mensual"
+                label={t("assumptions.monthlyAmount")}
                 value={config.privadaTramo2Amount}
                 onChange={(v) => onChange({ privadaTramo2Amount: v })}
                 suffix="MXN"
               />
               <NumberField
-                label="Desde"
+                label={t("assumptions.from")}
                 value={config.privadaTramo2Start}
                 onChange={(v) => onChange({ privadaTramo2Start: v })}
               />
               <NumberField
-                label="Hasta"
+                label={t("assumptions.until")}
                 value={config.privadaTramo2End}
                 onChange={(v) => onChange({ privadaTramo2End: v })}
               />
@@ -314,17 +317,17 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Otros aportes
+              {t("assumptions.otherContributions")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <NumberField
-                label="Devolucion SAT anual"
+                label={t("assumptions.satAnnualRefund")}
                 value={config.satAnnual}
                 onChange={(v) => onChange({ satAnnual: v })}
                 suffix="MXN"
               />
               <NumberField
-                label="Afore El bimestral"
+                label={t("assumptions.aforeHisBimonthly")}
                 value={config.aforeElBimonthly}
                 onChange={(v) => onChange({ aforeElBimonthly: v })}
                 suffix="MXN"
@@ -334,27 +337,27 @@ export function AssumptionsPanel({
 
           <div className="border-t border-border pt-3">
             <p className="text-xs font-medium text-muted-foreground mb-2">
-              Eventos especiales
+              {t("assumptions.specialEvents")}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <NumberField
-                label="Venta casa - Anio"
+                label={t("assumptions.houseSaleYear")}
                 value={config.ventaCasaYear}
                 onChange={(v) => onChange({ ventaCasaYear: v })}
               />
               <NumberField
-                label="Venta casa - Monto"
+                label={t("assumptions.houseSaleAmount")}
                 value={config.ventaCasaAmount}
                 onChange={(v) => onChange({ ventaCasaAmount: v })}
                 suffix="MXN"
               />
               <NumberField
-                label="Compra casa JP - Anio"
+                label={t("assumptions.housePurchaseYear")}
                 value={config.compraCasaYear}
                 onChange={(v) => onChange({ compraCasaYear: v })}
               />
               <NumberField
-                label="Compra casa JP - Monto"
+                label={t("assumptions.housePurchaseAmount")}
                 value={config.compraCasaAmount}
                 onChange={(v) => onChange({ compraCasaAmount: v })}
                 suffix="MXN"
@@ -367,17 +370,19 @@ export function AssumptionsPanel({
       {/* Withdrawals */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Retiros</CardTitle>
+          <CardTitle className="text-sm font-semibold">
+            {t("assumptions.withdrawals")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <NumberField
-            label="Retiro mensual VPN - Fase 2"
+            label={t("assumptions.withdrawalPhase2")}
             value={config.withdrawalPhase2VPN}
             onChange={(v) => onChange({ withdrawalPhase2VPN: v })}
             suffix="MXN"
           />
           <NumberField
-            label="Retiro mensual VPN - Fase 3"
+            label={t("assumptions.withdrawalPhase3")}
             value={config.withdrawalPhase3VPN}
             onChange={(v) => onChange({ withdrawalPhase3VPN: v })}
             suffix="MXN"
@@ -387,7 +392,7 @@ export function AssumptionsPanel({
 
       <Button onClick={onSimulate} className="w-full" size="lg">
         <Play className="size-4" />
-        Simular
+        {t("assumptions.simulate")}
       </Button>
     </div>
   )

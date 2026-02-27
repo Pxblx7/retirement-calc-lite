@@ -15,7 +15,7 @@ export interface SimConfig {
 
   // Inflation
   inflationMx: number // e.g. 0.0445
-  inflationJp: number // e.g. 0.02
+  inflationOther: number // e.g. 0.02
 
   // Returns
   returnPrivada: number // e.g. 0.08
@@ -96,7 +96,7 @@ export function getDefaultConfig(): SimConfig {
     phase3Start: 2060,
     phase3End: 2085,
     inflationMx: 0.0445,
-    inflationJp: 0.02,
+    inflationOther: 0.02,
     returnPrivada: 0.08,
     returnPPR: 0.09,
     returnAforeEl: 0.06,
@@ -153,7 +153,7 @@ export function simulatePlan(config: SimConfig): SimulationResult {
 
     if (phase === 2 || phase === 3) {
       const yearsInJp = y - config.phase2Start
-      const factorJp = Math.pow(1 + config.inflationJp, Math.max(0, yearsInJp))
+      const factorJp = Math.pow(1 + config.inflationOther, Math.max(0, yearsInJp))
       return vpn * factorMx * factorJp
     }
     return 0
@@ -275,22 +275,22 @@ export function simulatePlan(config: SimConfig): SimulationResult {
     {
       year: config.phase2Start,
       phase: 2 as const,
-      label: `Inicio Fase 2 (${config.phase2Start})`,
+      label: `kp.startPhase2`,
     },
     {
       year: config.phase2End,
       phase: 2 as const,
-      label: `Fin Fase 2 (${config.phase2End})`,
+      label: `kp.endPhase2`,
     },
     {
       year: config.phase3Start,
       phase: 3 as const,
-      label: `Inicio Fase 3 (${config.phase3Start})`,
+      label: `kp.startPhase3`,
     },
     {
       year: config.phase3End,
       phase: 3 as const,
-      label: `Fin Fase 3 (${config.phase3End})`,
+      label: `kp.endPhase3`,
     },
   ]
 
@@ -322,8 +322,16 @@ export function simulatePlan(config: SimConfig): SimulationResult {
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
 
-export function formatMXN(value: number): string {
-  return new Intl.NumberFormat('es-MX', {
+export function formatCurrency(value: number, locale: string = "en"): string {
+  if (locale === "es") {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'MXN',
     minimumFractionDigits: 0,

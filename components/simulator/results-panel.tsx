@@ -13,7 +13,9 @@ import {
 import {
   Area,
   AreaChart,
+  Bar,
   CartesianGrid,
+  ComposedChart,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -21,7 +23,8 @@ import {
   YAxis,
 } from "recharts"
 import type { SimulationResult, YearRow } from "@/lib/simulation"
-import { formatMXN } from "@/lib/simulation"
+import { formatCurrency } from "@/lib/simulation"
+import { useI18n } from "@/lib/i18n"
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react"
 
 interface ResultsPanelProps {
@@ -32,17 +35,21 @@ function PhaseSummaryCard({
   title,
   row,
   icon,
+  fmt,
 }: {
   title: string
   row: YearRow | null
   icon: React.ReactNode
+  fmt: (v: number) => string
 }) {
+  const { t } = useI18n()
+
   if (!row)
     return (
       <Card className="opacity-50">
         <CardContent className="p-4">
           <p className="text-xs text-muted-foreground">{title}</p>
-          <p className="text-sm font-medium">Sin datos</p>
+          <p className="text-sm font-medium">{t("results.noData")}</p>
         </CardContent>
       </Card>
     )
@@ -56,12 +63,12 @@ function PhaseSummaryCard({
           </div>
           <p className="text-xs font-medium text-muted-foreground">{title}</p>
         </div>
-        <p className="text-lg font-bold tabular-nums">{formatMXN(row.total)}</p>
+        <p className="text-lg font-bold tabular-nums">{fmt(row.total)}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>Privada: {formatMXN(row.privada)}</span>
-          <span>PPR: {formatMXN(row.ppr)}</span>
-          <span>Afore El: {formatMXN(row.aforeEl)}</span>
-          <span>Afore Ella: {formatMXN(row.aforeElla)}</span>
+          <span>Private: {fmt(row.privada)}</span>
+          <span>PPR: {fmt(row.ppr)}</span>
+          <span>Afore His: {fmt(row.aforeEl)}</span>
+          <span>Afore Her: {fmt(row.aforeElla)}</span>
         </div>
       </CardContent>
     </Card>
@@ -69,7 +76,9 @@ function PhaseSummaryCard({
 }
 
 function SummaryTab({ result }: ResultsPanelProps) {
-  // Show select years: every 5 years + phase boundaries
+  const { t, locale } = useI18n()
+  const fmt = (v: number) => formatCurrency(v, locale)
+
   const keyYears = new Set<number>()
   const firstYear = result.years[0]?.year ?? 0
   const lastYear = result.years[result.years.length - 1]?.year ?? 0
@@ -80,7 +89,6 @@ function SummaryTab({ result }: ResultsPanelProps) {
   keyYears.add(firstYear)
   keyYears.add(lastYear)
 
-  // Add every 5 years
   for (let y = firstYear; y <= lastYear; y += 5) {
     keyYears.add(y)
   }
@@ -91,42 +99,43 @@ function SummaryTab({ result }: ResultsPanelProps) {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <PhaseSummaryCard
-          title="Final Fase 1 - Acumulacion"
+          title={t("results.endPhase1")}
           row={result.endPhase1}
           icon={<TrendingUp className="size-4" />}
+          fmt={fmt}
         />
         <PhaseSummaryCard
-          title="Final Fase 2 - Transicion"
+          title={t("results.endPhase2")}
           row={result.endPhase2}
           icon={<Wallet className="size-4" />}
+          fmt={fmt}
         />
         <PhaseSummaryCard
-          title="Final Fase 3 - Horizonte"
+          title={t("results.endPhase3")}
           row={result.endPhase3}
           icon={<TrendingDown className="size-4" />}
+          fmt={fmt}
         />
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">
-            Saldos por Anio (resumen)
+            {t("results.balancesByYear")}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs">Anio</TableHead>
-                <TableHead className="text-xs">Fase</TableHead>
-                <TableHead className="text-xs text-right">Privada</TableHead>
+                <TableHead className="text-xs">{t("results.year")}</TableHead>
+                <TableHead className="text-xs">{t("results.phase")}</TableHead>
+                <TableHead className="text-xs text-right">Private</TableHead>
                 <TableHead className="text-xs text-right">PPR</TableHead>
-                <TableHead className="text-xs text-right">Afore El</TableHead>
-                <TableHead className="text-xs text-right">
-                  Afore Ella
-                </TableHead>
+                <TableHead className="text-xs text-right">Afore His</TableHead>
+                <TableHead className="text-xs text-right">Afore Her</TableHead>
                 <TableHead className="text-xs text-right font-bold">
-                  Total
+                  {t("results.total")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -149,23 +158,23 @@ function SummaryTab({ result }: ResultsPanelProps) {
                             : "bg-chart-1/15 text-chart-1"
                       }`}
                     >
-                      F{row.phase}
+                      P{row.phase}
                     </span>
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.privada)}
+                    {fmt(row.privada)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.ppr)}
+                    {fmt(row.ppr)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.aforeEl)}
+                    {fmt(row.aforeEl)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.aforeElla)}
+                    {fmt(row.aforeElla)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums font-bold">
-                    {formatMXN(row.total)}
+                    {fmt(row.total)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -178,13 +187,18 @@ function SummaryTab({ result }: ResultsPanelProps) {
 }
 
 function ChartTab({ result }: ResultsPanelProps) {
+  const { t, locale } = useI18n()
+  const fmt = (v: number) => formatCurrency(v, locale)
+
+  const withdrawalLabel = t("results.withdrawalsOnChart")
+
   const data = result.years.map((r) => ({
     year: r.year,
-    Privada: Math.round(r.privada),
+    Private: Math.round(r.privada),
     PPR: Math.round(r.ppr),
-    "Afore El": Math.round(r.aforeEl),
-    "Afore Ella": Math.round(r.aforeElla),
-    Total: Math.round(r.total),
+    "Afore His": Math.round(r.aforeEl),
+    "Afore Her": Math.round(r.aforeElla),
+    [withdrawalLabel]: Math.round(r.withdrawalNominalAnnual),
   }))
 
   const formatYAxis = (v: number) => {
@@ -197,13 +211,13 @@ function ChartTab({ result }: ResultsPanelProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">
-          Patrimonio Total en el Tiempo
+          {t("results.wealthOverTime")}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[400px] w-full">
+        <div className="h-[420px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+            <ComposedChart
               data={data}
               margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
             >
@@ -285,6 +299,15 @@ function ChartTab({ result }: ResultsPanelProps) {
                 className="fill-muted-foreground"
               />
               <YAxis
+                yAxisId="left"
+                tickFormatter={formatYAxis}
+                tick={{ fontSize: 11 }}
+                className="fill-muted-foreground"
+                width={60}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
                 tickFormatter={formatYAxis}
                 tick={{ fontSize: 11 }}
                 className="fill-muted-foreground"
@@ -298,18 +321,20 @@ function ChartTab({ result }: ResultsPanelProps) {
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: number) => formatMXN(value)}
+                formatter={(value: number) => fmt(value)}
               />
               <Legend wrapperStyle={{ fontSize: "12px" }} />
               <Area
+                yAxisId="left"
                 type="monotone"
-                dataKey="Privada"
+                dataKey="Private"
                 stackId="1"
                 stroke="var(--color-chart-1)"
                 fill="url(#colorPrivada)"
                 strokeWidth={2}
               />
               <Area
+                yAxisId="left"
                 type="monotone"
                 dataKey="PPR"
                 stackId="1"
@@ -318,22 +343,32 @@ function ChartTab({ result }: ResultsPanelProps) {
                 strokeWidth={2}
               />
               <Area
+                yAxisId="left"
                 type="monotone"
-                dataKey="Afore El"
+                dataKey="Afore His"
                 stackId="1"
                 stroke="var(--color-chart-3)"
                 fill="url(#colorAforeEl)"
                 strokeWidth={2}
               />
               <Area
+                yAxisId="left"
                 type="monotone"
-                dataKey="Afore Ella"
+                dataKey="Afore Her"
                 stackId="1"
                 stroke="var(--color-chart-4)"
                 fill="url(#colorAforeElla)"
                 strokeWidth={2}
               />
-            </AreaChart>
+              <Bar
+                yAxisId="right"
+                dataKey={withdrawalLabel}
+                fill="var(--color-destructive)"
+                opacity={0.6}
+                barSize={4}
+                radius={[2, 2, 0, 0]}
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </CardContent>
@@ -342,32 +377,34 @@ function ChartTab({ result }: ResultsPanelProps) {
 }
 
 function WithdrawalsTab({ result }: ResultsPanelProps) {
+  const { t, locale } = useI18n()
+  const fmt = (v: number) => formatCurrency(v, locale)
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">
-          Retiros: VPN vs Nominal
+          {t("results.vpnVsNominal")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          VPN = pesos de hoy (anio base). Nominal = pesos del anio
-          correspondiente, ajustado por inflacion.
+          {t("results.vpnExplanation")}
         </p>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs">Punto Clave</TableHead>
-              <TableHead className="text-xs">Anio</TableHead>
-              <TableHead className="text-xs">Fase</TableHead>
+              <TableHead className="text-xs">{t("results.keyPoint")}</TableHead>
+              <TableHead className="text-xs">{t("results.year")}</TableHead>
+              <TableHead className="text-xs">{t("results.phase")}</TableHead>
               <TableHead className="text-xs text-right">
-                Retiro VPN /mes
+                {t("results.withdrawalVPN")}
               </TableHead>
               <TableHead className="text-xs text-right">
-                Retiro Nominal /mes
+                {t("results.withdrawalNominal")}
               </TableHead>
               <TableHead className="text-xs text-right">
-                Factor Inflacion
+                {t("results.inflationFactor")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -378,7 +415,7 @@ function WithdrawalsTab({ result }: ResultsPanelProps) {
               return (
                 <TableRow key={kp.year}>
                   <TableCell className="text-xs font-medium">
-                    {kp.label}
+                    {t(kp.label as "kp.startPhase2")} ({kp.year})
                   </TableCell>
                   <TableCell className="text-xs tabular-nums">
                     {kp.year}
@@ -391,14 +428,14 @@ function WithdrawalsTab({ result }: ResultsPanelProps) {
                           : "bg-chart-1/15 text-chart-1"
                       }`}
                     >
-                      F{kp.phase}
+                      P{kp.phase}
                     </span>
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(kp.vpnMonthly)}
+                    {fmt(kp.vpnMonthly)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums font-bold">
-                    {formatMXN(kp.nominalMonthly)}
+                    {fmt(kp.nominalMonthly)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums text-muted-foreground">
                     {factor.toFixed(2)}x
@@ -414,11 +451,14 @@ function WithdrawalsTab({ result }: ResultsPanelProps) {
 }
 
 function FullTableTab({ result }: ResultsPanelProps) {
+  const { t, locale } = useI18n()
+  const fmt = (v: number) => formatCurrency(v, locale)
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-semibold">
-          Detalle Anual Completo
+          {t("results.fullDetail")}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -426,29 +466,29 @@ function FullTableTab({ result }: ResultsPanelProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs sticky top-0 bg-card">
-                  Anio
+                <TableHead className="text-xs sticky top-0 bg-card z-10">
+                  {t("results.year")}
                 </TableHead>
-                <TableHead className="text-xs sticky top-0 bg-card">
-                  Fase
+                <TableHead className="text-xs sticky top-0 bg-card z-10">
+                  {t("results.phase")}
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card">
-                  Privada
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                  Private
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
                   PPR
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card">
-                  Afore El
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                  Afore His
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card">
-                  Afore Ella
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                  Afore Her
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card font-bold">
-                  Total
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 font-bold">
+                  {t("results.total")}
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card">
-                  Retiro Anual
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                  {t("results.annualWithdrawal")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -471,27 +511,27 @@ function FullTableTab({ result }: ResultsPanelProps) {
                             : "bg-chart-1/15 text-chart-1"
                       }`}
                     >
-                      F{row.phase}
+                      P{row.phase}
                     </span>
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.privada)}
+                    {fmt(row.privada)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.ppr)}
+                    {fmt(row.ppr)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.aforeEl)}
+                    {fmt(row.aforeEl)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
-                    {formatMXN(row.aforeElla)}
+                    {fmt(row.aforeElla)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums font-bold">
-                    {formatMXN(row.total)}
+                    {fmt(row.total)}
                   </TableCell>
                   <TableCell className="text-xs text-right tabular-nums">
                     {row.withdrawalNominalAnnual > 0
-                      ? formatMXN(row.withdrawalNominalAnnual)
+                      ? fmt(row.withdrawalNominalAnnual)
                       : "-"}
                   </TableCell>
                 </TableRow>
@@ -505,13 +545,15 @@ function FullTableTab({ result }: ResultsPanelProps) {
 }
 
 export function ResultsPanel({ result }: ResultsPanelProps) {
+  const { t } = useI18n()
+
   return (
     <Tabs defaultValue="summary" className="w-full">
       <TabsList className="w-full">
-        <TabsTrigger value="summary">Resumen</TabsTrigger>
-        <TabsTrigger value="chart">Grafica</TabsTrigger>
-        <TabsTrigger value="withdrawals">Retiros</TabsTrigger>
-        <TabsTrigger value="full">Detalle</TabsTrigger>
+        <TabsTrigger value="summary">{t("results.summary")}</TabsTrigger>
+        <TabsTrigger value="chart">{t("results.chart")}</TabsTrigger>
+        <TabsTrigger value="withdrawals">{t("results.withdrawalsTab")}</TabsTrigger>
+        <TabsTrigger value="full">{t("results.detail")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="summary" className="mt-4">
