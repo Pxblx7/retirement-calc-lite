@@ -124,17 +124,17 @@ function SummaryTab({ result }: ResultsPanelProps) {
             {t("results.balancesByYear")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">{t("results.year")}</TableHead>
                 <TableHead className="text-xs">{t("results.phase")}</TableHead>
-                <TableHead className="text-xs text-right">Private</TableHead>
-                <TableHead className="text-xs text-right">PPR</TableHead>
-                <TableHead className="text-xs text-right">Afore His</TableHead>
-                <TableHead className="text-xs text-right">Afore Her</TableHead>
-                <TableHead className="text-xs text-right font-bold">
+                <TableHead className="text-xs text-right whitespace-nowrap">Private</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">PPR</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">Afore His</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">Afore Her</TableHead>
+                <TableHead className="text-xs text-right font-bold whitespace-nowrap">
                   {t("results.total")}
                 </TableHead>
               </TableRow>
@@ -390,20 +390,20 @@ function WithdrawalsTab({ result }: ResultsPanelProps) {
           {t("results.vpnExplanation")}
         </p>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs">{t("results.keyPoint")}</TableHead>
+              <TableHead className="text-xs whitespace-nowrap">{t("results.keyPoint")}</TableHead>
               <TableHead className="text-xs">{t("results.year")}</TableHead>
               <TableHead className="text-xs">{t("results.phase")}</TableHead>
-              <TableHead className="text-xs text-right">
+              <TableHead className="text-xs text-right whitespace-nowrap">
                 {t("results.withdrawalVPN")}
               </TableHead>
-              <TableHead className="text-xs text-right">
+              <TableHead className="text-xs text-right whitespace-nowrap">
                 {t("results.withdrawalNominal")}
               </TableHead>
-              <TableHead className="text-xs text-right">
+              <TableHead className="text-xs text-right whitespace-nowrap">
                 {t("results.inflationFactor")}
               </TableHead>
             </TableRow>
@@ -462,7 +462,7 @@ function FullTableTab({ result }: ResultsPanelProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="max-h-[500px] overflow-y-auto">
+        <div className="max-h-[500px] overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -472,22 +472,22 @@ function FullTableTab({ result }: ResultsPanelProps) {
                 <TableHead className="text-xs sticky top-0 bg-card z-10">
                   {t("results.phase")}
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 whitespace-nowrap">
                   Private
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 whitespace-nowrap">
                   PPR
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 whitespace-nowrap">
                   Afore His
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 whitespace-nowrap">
                   Afore Her
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 font-bold">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 font-bold whitespace-nowrap">
                   {t("results.total")}
                 </TableHead>
-                <TableHead className="text-xs text-right sticky top-0 bg-card z-10">
+                <TableHead className="text-xs text-right sticky top-0 bg-card z-10 whitespace-nowrap">
                   {t("results.annualWithdrawal")}
                 </TableHead>
               </TableRow>

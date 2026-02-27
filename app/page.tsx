@@ -73,7 +73,7 @@ export default function SimulatorPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1440px] px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <h1 className="text-lg font-bold text-foreground text-balance">
@@ -92,8 +92,8 @@ export default function SimulatorPage() {
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-6 items-start">
           {/* Left column - Assumptions */}
           <aside className="lg:sticky lg:top-6">
             <ScrollArea className="lg:h-[calc(100vh-120px)]">

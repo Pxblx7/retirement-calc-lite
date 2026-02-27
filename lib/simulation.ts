@@ -322,15 +322,7 @@ export function simulatePlan(config: SimConfig): SimulationResult {
 
 // ─── Formatters ──────────────────────────────────────────────────────────────
 
-export function formatCurrency(value: number, locale: string = "en"): string {
-  if (locale === "es") {
-    return new Intl.NumberFormat('es-MX', {
-      style: 'currency',
-      currency: 'MXN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value)
-  }
+export function formatCurrency(value: number, _locale: string = "en"): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'MXN',
