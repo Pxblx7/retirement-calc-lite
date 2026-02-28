@@ -8,47 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Minus, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// ─── Stepper wrapper ─────────────────────────────────────────────────────────
-
-function StepperWrapper({
-  children,
-  onDecrement,
-  onIncrement,
-}: {
-  children: React.ReactNode
-  onDecrement: () => void
-  onIncrement: () => void
-}) {
-  return (
-    <div className="flex items-center gap-1">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="size-8 shrink-0"
-        onClick={onDecrement}
-        tabIndex={-1}
-        aria-label="Decrease"
-      >
-        <Minus className="size-3.5" />
-      </Button>
-      <div className="flex-1 min-w-0">{children}</div>
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        className="size-8 shrink-0"
-        onClick={onIncrement}
-        tabIndex={-1}
-        aria-label="Increase"
-      >
-        <Plus className="size-3.5" />
-      </Button>
-    </div>
-  )
-}
-
 // ─── Currency Field ──────────────────────────────────────────────────────────
+// On mobile: full-width input, no stepper buttons (user types directly)
+// On desktop: input flanked by compact +/- buttons
 
 interface CurrencyFieldProps {
   label: string
@@ -75,10 +37,18 @@ export function CurrencyField({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <Label className="text-xs text-muted-foreground truncate">{label}</Label>
-      <StepperWrapper
-        onDecrement={() => onChange(Math.max(0, value - step))}
-        onIncrement={() => onChange(value + step)}
-      >
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:flex size-8 shrink-0"
+          onClick={() => onChange(Math.max(0, value - step))}
+          tabIndex={-1}
+          aria-label="Decrease"
+        >
+          <Minus className="size-3" />
+        </Button>
         <NumericFormat
           value={value}
           onValueChange={handleValueChange}
@@ -88,9 +58,20 @@ export function CurrencyField({
           allowNegative={false}
           prefix="$"
           customInput={Input}
-          className="h-8 text-sm tabular-nums text-right"
+          className="h-8 text-sm tabular-nums text-right min-w-0"
         />
-      </StepperWrapper>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:flex size-8 shrink-0"
+          onClick={() => onChange(value + step)}
+          tabIndex={-1}
+          aria-label="Increase"
+        >
+          <Plus className="size-3" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -120,10 +101,18 @@ export function YearField({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <Label className="text-xs text-muted-foreground truncate">{label}</Label>
-      <StepperWrapper
-        onDecrement={() => onChange(value - 1)}
-        onIncrement={() => onChange(value + 1)}
-      >
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:flex size-8 shrink-0"
+          onClick={() => onChange(value - 1)}
+          tabIndex={-1}
+          aria-label="Decrease"
+        >
+          <Minus className="size-3" />
+        </Button>
         <NumericFormat
           value={value}
           onValueChange={handleValueChange}
@@ -131,9 +120,20 @@ export function YearField({
           allowNegative={false}
           allowLeadingZeros={false}
           customInput={Input}
-          className="h-8 text-sm tabular-nums text-center"
+          className="h-8 text-sm tabular-nums text-center min-w-0"
         />
-      </StepperWrapper>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:flex size-8 shrink-0"
+          onClick={() => onChange(value + 1)}
+          tabIndex={-1}
+          aria-label="Increase"
+        >
+          <Plus className="size-3" />
+        </Button>
+      </div>
     </div>
   )
 }
@@ -168,16 +168,21 @@ export function PercentField({
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <Label className="text-xs text-muted-foreground truncate">{label}</Label>
-      <StepperWrapper
-        onDecrement={() => {
-          const next = Math.max(0, displayValue - step)
-          onChange(next / 100)
-        }}
-        onIncrement={() => {
-          const next = displayValue + step
-          onChange(next / 100)
-        }}
-      >
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:flex size-8 shrink-0"
+          onClick={() => {
+            const next = Math.max(0, displayValue - step)
+            onChange(next / 100)
+          }}
+          tabIndex={-1}
+          aria-label="Decrease"
+        >
+          <Minus className="size-3" />
+        </Button>
         <NumericFormat
           value={displayValue}
           onValueChange={handleValueChange}
@@ -186,9 +191,23 @@ export function PercentField({
           allowNegative={false}
           suffix="%"
           customInput={Input}
-          className="h-8 text-sm tabular-nums text-right"
+          className="h-8 text-sm tabular-nums text-right min-w-0"
         />
-      </StepperWrapper>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="hidden sm:flex size-8 shrink-0"
+          onClick={() => {
+            const next = displayValue + step
+            onChange(next / 100)
+          }}
+          tabIndex={-1}
+          aria-label="Increase"
+        >
+          <Plus className="size-3" />
+        </Button>
+      </div>
     </div>
   )
 }
