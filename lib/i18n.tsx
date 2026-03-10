@@ -62,6 +62,10 @@ const translations = {
     "results.chart": "Chart",
     "results.withdrawalsTab": "Withdrawals",
     "results.detail": "Detail",
+    "results.private": "Private",
+    "results.ppr": "PPR",
+    "results.aforeHis": "Afore His",
+    "results.aforeHer": "Afore Her",
 
     "results.endPhase1": "End Phase 1 - Accumulation",
     "results.endPhase2": "End Phase 2 - Transition",
@@ -151,6 +155,10 @@ const translations = {
     "results.chart": "Grafica",
     "results.withdrawalsTab": "Retiros",
     "results.detail": "Detalle",
+    "results.private": "Privada",
+    "results.ppr": "PPR",
+    "results.aforeHis": "Afore El",
+    "results.aforeHer": "Afore Ella",
 
     "results.endPhase1": "Final Fase 1 - Acumulacion",
     "results.endPhase2": "Final Fase 2 - Transicion",

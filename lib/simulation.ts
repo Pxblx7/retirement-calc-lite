@@ -38,6 +38,7 @@ export interface SimConfig {
   privadaTramo2Start: number
   privadaTramo2End: number
   satAnnual: number
+  satAnnualStartYear: number
   satMonth: number // 1-12, default 4 (April)
   aforeElBimonthly: number // amount every 2 months
   aforeEllaMonthly: number
@@ -113,6 +114,7 @@ export function getDefaultConfig(): SimConfig {
     privadaTramo2Start: 2041,
     privadaTramo2End: 2046,
     satAnnual: 30000,
+    satAnnualStartYear: 2027,
     satMonth: 4,
     aforeElBimonthly: 16000,
     aforeEllaMonthly: 2300,
@@ -178,7 +180,9 @@ export function simulatePlan(config: SimConfig): SimulationResult {
       }
 
       // SAT annual return
-      privada += config.satAnnual
+      if (y >= config.satAnnualStartYear) {
+        privada += config.satAnnual
+      }
 
       // Afore El bimonthly (6 times per year)
       aforeEl += config.aforeElBimonthly * 6

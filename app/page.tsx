@@ -110,7 +110,7 @@ export default function SimulatorPage() {
           {/* Right column - Results */}
           <section>
             {result ? (
-              <ResultsPanel result={result} />
+              <ResultsPanel config={config} result={result} />
             ) : (
               <div className="flex items-center justify-center rounded-lg border border-dashed border-border bg-card/50 p-12">
                 <div className="text-center">

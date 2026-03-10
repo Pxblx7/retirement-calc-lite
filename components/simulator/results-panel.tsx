@@ -1,5 +1,6 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -22,12 +23,14 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import type { SimulationResult, YearRow } from "@/lib/simulation"
+import { exportToExcel } from "@/lib/export"
+import type { SimConfig, SimulationResult, YearRow } from "@/lib/simulation"
 import { formatCurrency } from "@/lib/simulation"
 import { useI18n } from "@/lib/i18n"
 import { TrendingUp, TrendingDown, Wallet } from "lucide-react"
 
 interface ResultsPanelProps {
+  config: SimConfig
   result: SimulationResult
 }
 
@@ -54,28 +57,35 @@ function PhaseSummaryCard({
       </Card>
     )
 
+  const isPhase3 = title === t("results.endPhase3")
+  const isDepleted = isPhase3 && row.total <= 0
+
   return (
     <Card>
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex items-center justify-center size-8 rounded-md bg-primary/10 text-primary">
+          <div
+            className={`flex items-center justify-center size-8 rounded-md ${
+              isDepleted ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
+            }`}
+          >
             {icon}
           </div>
           <p className="text-xs font-medium text-muted-foreground">{title}</p>
         </div>
         <p className="text-lg font-bold tabular-nums">{fmt(row.total)}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>Private: {fmt(row.privada)}</span>
-          <span>PPR: {fmt(row.ppr)}</span>
-          <span>Afore His: {fmt(row.aforeEl)}</span>
-          <span>Afore Her: {fmt(row.aforeElla)}</span>
+          <span>{t("results.private")}: {fmt(row.privada)}</span>
+          <span>{t("results.ppr")}: {fmt(row.ppr)}</span>
+          <span>{t("results.aforeHis")}: {fmt(row.aforeEl)}</span>
+          <span>{t("results.aforeHer")}: {fmt(row.aforeElla)}</span>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function SummaryTab({ result }: ResultsPanelProps) {
+function SummaryTab({ config, result }: ResultsPanelProps) {
   const { t, locale } = useI18n()
   const fmt = (v: number) => formatCurrency(v, locale)
 
@@ -130,10 +140,10 @@ function SummaryTab({ result }: ResultsPanelProps) {
               <TableRow>
                 <TableHead className="text-xs">{t("results.year")}</TableHead>
                 <TableHead className="text-xs">{t("results.phase")}</TableHead>
-                <TableHead className="text-xs text-right whitespace-nowrap">Private</TableHead>
-                <TableHead className="text-xs text-right whitespace-nowrap">PPR</TableHead>
-                <TableHead className="text-xs text-right whitespace-nowrap">Afore His</TableHead>
-                <TableHead className="text-xs text-right whitespace-nowrap">Afore Her</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">{t("results.private")}</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">{t("results.ppr")}</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">{t("results.aforeHis")}</TableHead>
+                <TableHead className="text-xs text-right whitespace-nowrap">{t("results.aforeHer")}</TableHead>
                 <TableHead className="text-xs text-right font-bold whitespace-nowrap">
                   {t("results.total")}
                 </TableHead>
@@ -186,7 +196,7 @@ function SummaryTab({ result }: ResultsPanelProps) {
   )
 }
 
-function ChartTab({ result }: ResultsPanelProps) {
+function ChartTab({ config, result }: ResultsPanelProps) {
   const { t, locale } = useI18n()
   const fmt = (v: number) => formatCurrency(v, locale)
 
@@ -376,7 +386,7 @@ function ChartTab({ result }: ResultsPanelProps) {
   )
 }
 
-function WithdrawalsTab({ result }: ResultsPanelProps) {
+function WithdrawalsTab({ config, result }: ResultsPanelProps) {
   const { t, locale } = useI18n()
   const fmt = (v: number) => formatCurrency(v, locale)
 
@@ -450,7 +460,7 @@ function WithdrawalsTab({ result }: ResultsPanelProps) {
   )
 }
 
-function FullTableTab({ result }: ResultsPanelProps) {
+function FullTableTab({ config, result }: ResultsPanelProps) {
   const { t, locale } = useI18n()
   const fmt = (v: number) => formatCurrency(v, locale)
 
@@ -544,32 +554,41 @@ function FullTableTab({ result }: ResultsPanelProps) {
   )
 }
 
-export function ResultsPanel({ result }: ResultsPanelProps) {
-  const { t } = useI18n()
+export function ResultsPanel({ config, result }: ResultsPanelProps) {
+  const { t, locale } = useI18n()
+
+  const handleExport = () => {
+    exportToExcel(config, result, t, locale)
+  }
 
   return (
     <Tabs defaultValue="summary" className="w-full">
-      <TabsList className="w-full">
-        <TabsTrigger value="summary">{t("results.summary")}</TabsTrigger>
-        <TabsTrigger value="chart">{t("results.chart")}</TabsTrigger>
-        <TabsTrigger value="withdrawals">{t("results.withdrawalsTab")}</TabsTrigger>
-        <TabsTrigger value="full">{t("results.detail")}</TabsTrigger>
-      </TabsList>
+      <div className="flex items-center gap-2">
+        <TabsList className="w-full">
+          <TabsTrigger value="summary">{t("results.summary")}</TabsTrigger>
+          <TabsTrigger value="chart">{t("results.chart")}</TabsTrigger>
+          <TabsTrigger value="withdrawals">{t("results.withdrawalsTab")}</TabsTrigger>
+          <TabsTrigger value="full">{t("results.detail")}</TabsTrigger>
+        </TabsList>
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          Export
+        </Button>
+      </div>
 
       <TabsContent value="summary" className="mt-4">
-        <SummaryTab result={result} />
+        <SummaryTab config={config} result={result} />
       </TabsContent>
 
       <TabsContent value="chart" className="mt-4">
-        <ChartTab result={result} />
+        <ChartTab config={config} result={result} />
       </TabsContent>
 
       <TabsContent value="withdrawals" className="mt-4">
-        <WithdrawalsTab result={result} />
+        <WithdrawalsTab config={config} result={result} />
       </TabsContent>
 
       <TabsContent value="full" className="mt-4">
-        <FullTableTab result={result} />
+        <FullTableTab config={config} result={result} />
       </TabsContent>
     </Tabs>
   )
