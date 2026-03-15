@@ -4,6 +4,8 @@ import { useState, useCallback } from "react"
 import { useTheme } from "next-themes"
 import { AssumptionsPanel } from "@/components/simulator/assumptions-panel"
 import { ResultsPanel } from "@/components/simulator/results-panel"
+import { AITips } from "@/components/simulator/ai-tips"
+import { PortfolioTips, RetirementExplainer } from "@/components/simulator/educational-sections"
 import {
   getDefaultConfig,
   simulatePlan,
@@ -13,22 +15,21 @@ import {
 import { useI18n, type Locale } from "@/lib/i18n"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { Sun, Moon, Globe } from "lucide-react"
+import { Sun, Moon, Globe, Calculator } from "lucide-react"
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
 
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant="ghost"
+      size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="gap-1.5"
+      className="rounded-full"
       aria-label="Toggle theme"
     >
-      <Sun className="size-4 dark:hidden" />
-      <Moon className="size-4 hidden dark:block" />
-      <span className="sr-only">Toggle theme</span>
+      <Sun className="size-5 dark:hidden" />
+      <Moon className="size-5 hidden dark:block" />
     </Button>
   )
 }
@@ -43,10 +44,10 @@ function LanguageToggle() {
 
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="sm"
       onClick={toggle}
-      className="gap-1.5 uppercase tabular-nums"
+      className="gap-1.5 uppercase font-bold text-xs"
       aria-label="Toggle language"
     >
       <Globe className="size-4" />
@@ -58,6 +59,7 @@ function LanguageToggle() {
 export default function SimulatorPage() {
   const [config, setConfig] = useState<SimConfig>(getDefaultConfig)
   const [result, setResult] = useState<SimulationResult | null>(null)
+  const [aiTrigger, setAiTrigger] = useState(0)
   const { t } = useI18n()
 
   const handleChange = useCallback((updates: Partial<SimConfig>) => {
@@ -67,68 +69,110 @@ export default function SimulatorPage() {
   const handleSimulate = useCallback(() => {
     const res = simulatePlan(config)
     setResult(res)
+    // Trigger AI fetch
+    setAiTrigger((prev) => prev + 1)
   }, [config])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto max-w-[1440px] px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-lg font-bold text-foreground text-balance">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto max-w-[1440px] px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-primary p-1.5 rounded-lg">
+              <Calculator className="size-5 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-sm font-black tracking-tight uppercase">
                 {t("header.title")}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
                 {t("header.subtitle")}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <LanguageToggle />
-              <ThemeToggle />
-            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <LanguageToggle />
+            <ThemeToggle />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-6 items-start">
+      <main className="mx-auto max-w-[1440px] px-4 py-8 flex-grow w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-8 items-start">
           {/* Left column - Assumptions */}
-          <aside className="lg:sticky lg:top-6">
-            <ScrollArea className="lg:h-[calc(100vh-120px)]">
-              <div className="pr-4">
-                <AssumptionsPanel
-                  config={config}
-                  onChange={handleChange}
-                  onSimulate={handleSimulate}
-                />
-              </div>
+          <aside className="lg:sticky lg:top-24">
+            <ScrollArea className="lg:h-[calc(100vh-160px)] pr-4 -mr-4">
+              <AssumptionsPanel
+                config={config}
+                onChange={handleChange}
+                onSimulate={handleSimulate}
+              />
             </ScrollArea>
           </aside>
 
-          {/* Right column - Results */}
-          <section>
-            {result ? (
-              <ResultsPanel config={config} result={result} />
-            ) : (
-              <div className="flex items-center justify-center rounded-lg border border-dashed border-border bg-card/50 p-12">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {t("empty.configure")}
-                  </p>
-                  <p className="text-lg font-semibold text-foreground mt-1">
-                    {t("empty.simulate")}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {t("empty.toSee")}
+          {/* Right column - Results & Sections */}
+          <div className="flex flex-col gap-12">
+            {/* Results Section */}
+            <section id="results">
+              <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+                {t("section.results")}
+              </h2>
+              {result ? (
+                <div className="flex flex-col gap-8">
+                  <ResultsPanel config={config} result={result} />
+                  <RetirementExplainer />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-card/30 p-16 text-center">
+                  <div className="bg-muted size-16 rounded-full flex items-center justify-center mb-4">
+                    <Calculator className="size-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">
+                    {t("empty.title")}
+                  </h3>
+                  <p className="text-muted-foreground mt-2 max-w-xs">
+                    {t("empty.subtitle")}
                   </p>
                 </div>
-              </div>
+              )}
+            </section>
+
+            {/* AI Recommendations */}
+            {result && (
+              <section id="ai-tips">
+                <AITips config={config} result={result} triggerFetch={aiTrigger} />
+              </section>
             )}
-          </section>
+
+            {/* Portfolio Tips */}
+            <section id="portfolio-tips">
+              <PortfolioTips />
+            </section>
+          </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/40 bg-card/30 py-8 mt-12">
+        <div className="mx-auto max-w-[1440px] px-4 flex flex-col items-center gap-2 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t("footer.builtBy")}{" "}
+            <a 
+              href="https://pxblx7.github.io/pablo-arroyo-product-manager/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="font-bold text-primary hover:underline"
+            >
+              Pablo Arroyo — Product Manager
+            </a>
+          </p>
+          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
+            © {new Date().getFullYear()} RETIRO MX. {t("footer.onlyEducational")}
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }

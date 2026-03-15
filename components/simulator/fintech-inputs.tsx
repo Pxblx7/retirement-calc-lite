@@ -9,8 +9,6 @@ import { Minus, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ─── Currency Field ──────────────────────────────────────────────────────────
-// On mobile: full-width input, no stepper buttons (user types directly)
-// On desktop: input flanked by compact +/- buttons
 
 interface CurrencyFieldProps {
   label: string

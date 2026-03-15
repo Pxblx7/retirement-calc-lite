@@ -2,10 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { CurrencyField, YearField, PercentField } from "@/components/simulator/fintech-inputs"
 import type { SimConfig } from "@/lib/simulation"
 import { useI18n } from "@/lib/i18n"
-import { Play } from "lucide-react"
+import { Info } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface AssumptionsPanelProps {
   config: SimConfig
@@ -20,327 +23,266 @@ export function AssumptionsPanel({
 }: AssumptionsPanelProps) {
   const { t } = useI18n()
 
+  const handleSalaryChange = (salary: number) => {
+    const aforeContribution = Math.round(salary * 0.065)
+    onChange({
+      afore: {
+        ...config.afore,
+        grossSalary: salary,
+        monthlyContribution: aforeContribution,
+      },
+    })
+  }
+
+  const handleIndependentToggle = (checked: boolean) => {
+    onChange({
+      isIndependent: checked,
+      afore: {
+        ...config.afore,
+        grossSalary: checked ? 0 : config.afore.grossSalary,
+        monthlyContribution: checked ? 0 : config.afore.monthlyContribution,
+      },
+    })
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {/* General Assumptions */}
+      {/* General Settings */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">
-            {t("assumptions.general")}
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            {t("section.config")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <YearField
-              label={t("assumptions.baseYear")}
-              value={config.yearBase}
-              onChange={(v) => onChange({ yearBase: v })}
+              label={t("assumptions.currentAge")}
+              value={config.currentAge}
+              onChange={(v) => onChange({ currentAge: v })}
             />
             <YearField
-              label={t("assumptions.endYear")}
-              value={config.yearEnd}
-              onChange={(v) => onChange({ yearEnd: v })}
+              label={t("assumptions.retirementAge")}
+              value={config.retirementAge}
+              onChange={(v) => onChange({ retirementAge: v })}
             />
           </div>
-
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.phase1")}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <YearField
-                label={t("assumptions.start")}
-                value={config.phase1Start}
-                onChange={(v) => onChange({ phase1Start: v })}
-              />
-              <YearField
-                label={t("assumptions.end")}
-                value={config.phase1End}
-                onChange={(v) => onChange({ phase1End: v })}
-              />
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.phase2")}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <YearField
-                label={t("assumptions.start")}
-                value={config.phase2Start}
-                onChange={(v) => onChange({ phase2Start: v })}
-              />
-              <YearField
-                label={t("assumptions.end")}
-                value={config.phase2End}
-                onChange={(v) => onChange({ phase2End: v })}
-              />
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.phase3")}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <YearField
-                label={t("assumptions.start")}
-                value={config.phase3Start}
-                onChange={(v) => onChange({ phase3Start: v })}
-              />
-              <YearField
-                label={t("assumptions.end")}
-                value={config.phase3End}
-                onChange={(v) => onChange({ phase3End: v })}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Rates & Returns */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">
-            {t("assumptions.rates")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t("assumptions.planningHorizon")}
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="size-3 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs text-xs">{t("assumptions.planningHorizonTooltip")}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <YearField
+                label=""
+                value={config.planningHorizonAge}
+                onChange={(v) => onChange({ planningHorizonAge: v })}
+              />
+            </div>
             <PercentField
-              label={t("assumptions.inflationMx")}
-              value={config.inflationMx}
-              onChange={(v) => onChange({ inflationMx: v })}
-            />
-            <PercentField
-              label={t("assumptions.inflationOther")}
-              value={config.inflationOther}
-              onChange={(v) => onChange({ inflationOther: v })}
-            />
-          </div>
-          <div className="border-t border-border pt-3 grid grid-cols-2 gap-3">
-            <PercentField
-              label={t("assumptions.returnPrivada")}
-              value={config.returnPrivada}
-              onChange={(v) => onChange({ returnPrivada: v })}
-            />
-            <PercentField
-              label={t("assumptions.returnPPR")}
-              value={config.returnPPR}
-              onChange={(v) => onChange({ returnPPR: v })}
-            />
-            <PercentField
-              label={t("assumptions.returnAforeEl")}
-              value={config.returnAforeEl}
-              onChange={(v) => onChange({ returnAforeEl: v })}
-            />
-            <PercentField
-              label={t("assumptions.returnAforeElla")}
-              value={config.returnAforeElla}
-              onChange={(v) => onChange({ returnAforeElla: v })}
+              label={t("assumptions.inflation")}
+              value={config.inflation}
+              onChange={(v) => onChange({ inflation: v })}
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* Contributions & Events */}
+      {/* My Savings */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">
-            {t("assumptions.contributions")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          {/* Initial Balances */}
-          <p className="text-xs font-medium text-muted-foreground">
-            {t("assumptions.initialBalances")}
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <CurrencyField
-              label={t("assumptions.private")}
-              value={config.initialPrivada}
-              onChange={(v) => onChange({ initialPrivada: v })}
-              step={10000}
-            />
-            <CurrencyField
-              label="PPR"
-              value={config.initialPPR}
-              onChange={(v) => onChange({ initialPPR: v })}
-              step={10000}
-            />
-            <CurrencyField
-              label={t("assumptions.aforeHis")}
-              value={config.initialAforeEl}
-              onChange={(v) => onChange({ initialAforeEl: v })}
-              step={10000}
-            />
-            <CurrencyField
-              label={t("assumptions.aforeHer")}
-              value={config.initialAforeElla}
-              onChange={(v) => onChange({ initialAforeElla: v })}
-              step={10000}
-            />
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">
+              {t("section.savings")}
+            </CardTitle>
           </div>
-
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.monthlyContributions")}
-            </p>
+          <div className="flex items-center space-x-2 mt-2 bg-primary/5 p-2 rounded-md border border-primary/10">
+            <Checkbox 
+              id="independent" 
+              checked={config.isIndependent}
+              onCheckedChange={(checked) => handleIndependentToggle(checked as boolean)}
+            />
+            <Label 
+              htmlFor="independent" 
+              className="text-[10px] font-bold uppercase tracking-tight cursor-pointer text-primary"
+            >
+              {t("field.isIndependent")}
+            </Label>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          {/* AFORE */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
+                {t("bucket.afore")}
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="size-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{t("bucket.aforeTooltip")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {!config.isIndependent && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs font-medium text-muted-foreground">
+                      {t("field.grossSalary")}
+                    </label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="size-3 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-xs">{t("field.aforeHelper")}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <CurrencyField
+                    label=""
+                    value={config.afore.grossSalary}
+                    onChange={handleSalaryChange}
+                  />
+                </div>
+              )}
+              <CurrencyField
+                label={t("field.currentBalance")}
+                value={config.afore.initialBalance}
+                onChange={(v) => onChange({ afore: { ...config.afore, initialBalance: v } })}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <CurrencyField
-                label={t("assumptions.pprMonthly")}
-                value={config.pprMonthly}
-                onChange={(v) => onChange({ pprMonthly: v })}
-                step={500}
+                label={t("field.monthlyContribution")}
+                value={config.afore.monthlyContribution}
+                onChange={(v) => onChange({ afore: { ...config.afore, monthlyContribution: v } })}
               />
-              <CurrencyField
-                label={t("assumptions.aforeHerMonthly")}
-                value={config.aforeEllaMonthly}
-                onChange={(v) => onChange({ aforeEllaMonthly: v })}
-                step={100}
-              />
-            </div>
-            <div className="mt-3">
-              <YearField
-                label={t("assumptions.aforeHerUntilYear")}
-                value={config.aforeEllaEndYear}
-                onChange={(v) => onChange({ aforeEllaEndYear: v })}
+              <PercentField
+                label={t("field.expectedReturn")}
+                value={config.afore.annualReturn}
+                onChange={(v) => onChange({ afore: { ...config.afore, annualReturn: v } })}
               />
             </div>
           </div>
 
-          {/* Private Tranche 1 */}
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.privateTranche1")}
-            </p>
-            <div className="flex flex-col gap-2">
+          {/* PPR */}
+          <div className="flex flex-col gap-3 border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
+                {t("bucket.ppr")}
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="size-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{t("bucket.pprTooltip")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <CurrencyField
-                label={t("assumptions.monthlyAmount")}
-                value={config.privadaTramo1Amount}
-                onChange={(v) => onChange({ privadaTramo1Amount: v })}
-                step={1000}
+                label={t("field.currentBalance")}
+                value={config.ppr.initialBalance}
+                onChange={(v) => onChange({ ppr: { ...config.ppr, initialBalance: v } })}
               />
-              <div className="grid grid-cols-2 gap-3">
-                <YearField
-                  label={t("assumptions.from")}
-                  value={config.privadaTramo1Start}
-                  onChange={(v) => onChange({ privadaTramo1Start: v })}
-                />
-                <YearField
-                  label={t("assumptions.until")}
-                  value={config.privadaTramo1End}
-                  onChange={(v) => onChange({ privadaTramo1End: v })}
+              <CurrencyField
+                label={t("field.monthlyContribution")}
+                value={config.ppr.monthlyContribution}
+                onChange={(v) => onChange({ ppr: { ...config.ppr, monthlyContribution: v } })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <PercentField
+                label={t("field.expectedReturn")}
+                value={config.ppr.annualReturn}
+                onChange={(v) => onChange({ ppr: { ...config.ppr, annualReturn: v } })}
+              />
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {t("field.satRefund")}
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="size-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs text-xs">{t("field.satRefundHelper")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <CurrencyField
+                  label=""
+                  value={config.ppr.satRefund}
+                  onChange={(v) => onChange({ ppr: { ...config.ppr, satRefund: v } })}
                 />
               </div>
             </div>
           </div>
 
-          {/* Private Tranche 2 */}
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.privateTranche2")}
-            </p>
-            <div className="flex flex-col gap-2">
-              <CurrencyField
-                label={t("assumptions.monthlyAmount")}
-                value={config.privadaTramo2Amount}
-                onChange={(v) => onChange({ privadaTramo2Amount: v })}
-                step={1000}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <YearField
-                  label={t("assumptions.from")}
-                  value={config.privadaTramo2Start}
-                  onChange={(v) => onChange({ privadaTramo2Start: v })}
-                />
-                <YearField
-                  label={t("assumptions.until")}
-                  value={config.privadaTramo2End}
-                  onChange={(v) => onChange({ privadaTramo2End: v })}
-                />
-              </div>
+          {/* Private Savings */}
+          <div className="flex flex-col gap-3 border-t border-border pt-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
+                {t("bucket.private")}
+              </h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="size-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-xs">{t("bucket.privateTooltip")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-          </div>
-
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.otherContributions")}
-            </p>
             <div className="grid grid-cols-2 gap-3">
               <CurrencyField
-                label={t("assumptions.satAnnualRefund")}
-                value={config.satAnnual}
-                onChange={(v) => onChange({ satAnnual: v })}
-                step={5000}
+                label={t("field.currentBalance")}
+                value={config.private.initialBalance}
+                onChange={(v) => onChange({ private: { ...config.private, initialBalance: v } })}
               />
               <CurrencyField
-                label={t("assumptions.aforeHisBimonthly")}
-                value={config.aforeElBimonthly}
-                onChange={(v) => onChange({ aforeElBimonthly: v })}
-                step={1000}
+                label={t("field.monthlyContribution")}
+                value={config.private.monthlyContribution}
+                onChange={(v) => onChange({ private: { ...config.private, monthlyContribution: v } })}
               />
             </div>
-          </div>
-
-          <div className="border-t border-border pt-3">
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              {t("assumptions.specialEvents")}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <YearField
-                label={t("assumptions.houseSaleYear")}
-                value={config.ventaCasaYear}
-                onChange={(v) => onChange({ ventaCasaYear: v })}
-              />
-              <CurrencyField
-                label={t("assumptions.houseSaleAmount")}
-                value={config.ventaCasaAmount}
-                onChange={(v) => onChange({ ventaCasaAmount: v })}
-                step={100000}
-              />
-              <YearField
-                label={t("assumptions.housePurchaseYear")}
-                value={config.compraCasaYear}
-                onChange={(v) => onChange({ compraCasaYear: v })}
-              />
-              <CurrencyField
-                label={t("assumptions.housePurchaseAmount")}
-                value={config.compraCasaAmount}
-                onChange={(v) => onChange({ compraCasaAmount: v })}
-                step={100000}
-              />
-            </div>
+            <PercentField
+              label={t("field.expectedReturn")}
+              value={config.private.annualReturn}
+              onChange={(v) => onChange({ private: { ...config.private, annualReturn: v } })}
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Withdrawals */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">
-            {t("assumptions.withdrawals")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <CurrencyField
-            label={t("assumptions.withdrawalPhase2")}
-            value={config.withdrawalPhase2VPN}
-            onChange={(v) => onChange({ withdrawalPhase2VPN: v })}
-            step={5000}
-          />
-          <CurrencyField
-            label={t("assumptions.withdrawalPhase3")}
-            value={config.withdrawalPhase3VPN}
-            onChange={(v) => onChange({ withdrawalPhase3VPN: v })}
-            step={5000}
-          />
-        </CardContent>
-      </Card>
-
-      <Button onClick={onSimulate} className="w-full" size="lg">
-        <Play className="size-4" />
+      <Button onClick={onSimulate} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" size="lg">
         {t("assumptions.simulate")}
       </Button>
     </div>

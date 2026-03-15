@@ -9,8 +9,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Retirement Simulator - Wealth Strategy',
-  description: 'Retirement plan simulator in 3 phases: accumulation, transition, and advanced withdrawals for wealth strategy.',
+  title: 'Retirement Calc Lite',
+  description: 'Single-person retirement simulator for the Mexican market.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -37,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
