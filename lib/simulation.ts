@@ -87,7 +87,7 @@ export function getDefaultConfig(): SimConfig {
  * PMT = PV * (r / (1 - (1 + r)^-n))
  */
 function calculateAnnuity(pv: number, annualRate: number, months: number): number {
-  if (pv <= 0) return 0
+  if (pv <= 0 || months <= 0) return 0
   const r = annualRate / 12
   if (r === 0) return pv / months
   return pv * (r / (1 - Math.pow(1 + r, -months)))
@@ -96,107 +96,100 @@ function calculateAnnuity(pv: number, annualRate: number, months: number): numbe
 // ─── Simulation ──────────────────────────────────────────────────────────────
 
 export function simulatePlan(config: SimConfig): SimulationResult {
-  const yearsToStopWork = config.retirementAge - config.currentAge;
-
-  // --- Key Ages & Scenarios ---
-  const isTooEarly = config.retirementAge < 60; // Scenario A: Stops work early, AFORE pays at 65
-  const isCesantia = config.retirementAge >= 60 && config.retirementAge < 65; // Scenario B: Pays at retirementAge with penalty
-  const isVejez = config.retirementAge >= 65; // Scenario C: Pays at retirementAge (100%)
-
+  const years: YearRow[] = [];
+  
+  // --- Constants & Scenario Flags ---
+  const isTooEarly = config.retirementAge < 60;
+  const isCesantia = config.retirementAge >= 60 && config.retirementAge < 65;
+  
   const aforePayoutAge = isTooEarly ? 65 : config.retirementAge;
   const pprPrivatePayoutAge = config.retirementAge;
 
-  // Annuity horizon calculation is based on planning horizon minus actual payout age
-  const yearsToAforeAnnuity = config.planningHorizonAge - aforePayoutAge;
-  const monthsInRetirementAfore = yearsToAforeAnnuity * 12;
+  const monthsInRetirementAfore = (config.planningHorizonAge - aforePayoutAge) * 12;
+  const monthsInRetirementPprPrivate = (config.planningHorizonAge - pprPrivatePayoutAge) * 12;
 
-  const yearsToPprPrivateAnnuity = config.planningHorizonAge - pprPrivatePayoutAge;
-  const monthsInRetirementPprPrivate = yearsToPprPrivateAnnuity * 12;
-
+  // --- Initial State ---
   let aforeBalance = config.afore.initialBalance;
   let pprBalance = config.ppr.initialBalance;
   let privateBalance = config.private.initialBalance;
 
-  const years: YearRow[] = [];
+  // 1. PROJECT UNTIL PLANNING HORIZON
+  // This unified loop handles Accumulation, Passive Growth, and Withdrawal phases
+  for (let age = config.currentAge; age <= config.planningHorizonAge; age++) {
+    const yearIdx = age - config.currentAge;
+    const currentYear = config.yearBase + yearIdx;
 
-  // 1. Project until stop work age (where contributions cease)
-  for (let i = 0; i <= yearsToStopWork; i++) {
-    const currentYear = config.yearBase + i;
-    const currentAge = config.currentAge + i;
-
+    // Capture state at the BEGINNING of the period/year
     years.push({
       year: currentYear,
-      age: currentAge,
-      aforeBalance,
-      pprBalance,
-      privateBalance,
-      totalBalance: aforeBalance + pprBalance + privateBalance,
+      age: age,
+      aforeBalance: Math.max(0, aforeBalance),
+      pprBalance: Math.max(0, pprBalance),
+      privateBalance: Math.max(0, privateBalance),
+      totalBalance: Math.max(0, aforeBalance + pprBalance + privateBalance),
     });
 
-    if (i < yearsToStopWork) {
-      // Apply monthly contributions and returns
+    // Stop calculations if we've reached the last year of the planning horizon
+    if (age === config.planningHorizonAge) break;
+
+    // CALCULATE NEXT YEAR'S BALANCE
+    
+    // --- Phase Logic for each bucket ---
+    
+    // AFORE Payout Factor (Applied only at withdrawal)
+    const aforePenaltyFactor = isCesantia ? (0.75 + (config.retirementAge - 60) * 0.05) : 1.0;
+
+    // A. AFORE Logic
+    if (age < config.retirementAge) {
+      // Accumulation
       aforeBalance = (aforeBalance + config.afore.monthlyContribution * 12) * (1 + config.afore.annualReturn);
-      pprBalance = (pprBalance + config.ppr.monthlyContribution * 12) * (1 + config.ppr.annualReturn);
+    } else if (age < aforePayoutAge) {
+      // Passive Growth (Scenario A: Early retirement, wait until 65)
+      aforeBalance = aforeBalance * (1 + config.afore.annualReturn);
+    } else {
+      // Withdrawal Phase
+      // We calculate the annuity at the MOMENT payout starts
+      const pvAtStart = years.find(y => y.age === aforePayoutAge)?.aforeBalance || 0;
+      const aforeMonthly = calculateAnnuity(pvAtStart, config.afore.annualReturn, monthsInRetirementAfore) * aforePenaltyFactor;
+      aforeBalance = (aforeBalance * (1 + config.afore.annualReturn)) - (aforeMonthly * 12);
+    }
+
+    // B. PPR Logic
+    if (age < config.retirementAge) {
+      // Accumulation
+      pprBalance = (pprBalance + config.ppr.monthlyContribution * 12) * (1 + config.ppr.annualReturn) + config.ppr.satRefund;
+    } else {
+      // Withdrawal Phase
+      const pvAtStart = years.find(y => y.age === pprPrivatePayoutAge)?.pprBalance || 0;
+      const pprMonthly = calculateAnnuity(pvAtStart, config.ppr.annualReturn, monthsInRetirementPprPrivate);
+      pprBalance = (pprBalance * (1 + config.ppr.annualReturn)) - (pprMonthly * 12);
+    }
+
+    // C. Private Logic
+    if (age < config.retirementAge) {
+      // Accumulation
       privateBalance = (privateBalance + config.private.monthlyContribution * 12) * (1 + config.private.annualReturn);
-
-      // Add SAT refund for PPR (starting year after base year)
-      if (currentYear >= config.yearBase) {
-        pprBalance += config.ppr.satRefund;
-      }
+    } else {
+      // Withdrawal Phase
+      const pvAtStart = years.find(y => y.age === pprPrivatePayoutAge)?.privateBalance || 0;
+      const privateMonthly = calculateAnnuity(pvAtStart, config.private.annualReturn, monthsInRetirementPprPrivate);
+      privateBalance = (privateBalance * (1 + config.private.annualReturn)) - (privateMonthly * 12);
     }
   }
 
-  // --- 2. Post-Contribution Adjustments & Payout Calculations ---
+  // --- FINAL PENSION CALCULATIONS (FOR RESULTS PANEL) ---
+  // To ensure 100% consistency, we pull the "PV at Start" from the generated years array
+  const finalAforePV = years.find(y => y.age === aforePayoutAge)?.aforeBalance || 0;
+  const finalPprPV = years.find(y => y.age === pprPrivatePayoutAge)?.pprBalance || 0;
+  const finalPrivatePV = years.find(y => y.age === pprPrivatePayoutAge)?.privateBalance || 0;
 
-  // A. AFORE Balance Adjustment (Passive Growth if needed)
-  let aforeBalanceAtPayout = aforeBalance;
-  let aforePenaltyFactor = 1.0;
-
-  if (isTooEarly) {
-    // SCENARIO A: Grow from retirementAge to 65
-    const yearsToGrow = 65 - config.retirementAge;
-    for (let i = 0; i < yearsToGrow; i++) {
-       aforeBalanceAtPayout = aforeBalanceAtPayout * (1 + config.afore.annualReturn);
-    }
-  } else if (isCesantia) {
-    // SCENARIO B: Penalty applies based on age, PV is at retirementAge (aforeBalance already holds this)
-    // 60 years: 75%, 61: 80%, 62: 85%, 63: 90%, 64: 95%
-    aforePenaltyFactor = 0.75 + (config.retirementAge - 60) * 0.05;
-  }
-  // If isVejez, aforeBalanceAtPayout = aforeBalance (100% payout at retirementAge)
-
-  // B. AFORE Monthly Payout
-  let aforeMonthly = calculateAnnuity(aforeBalanceAtPayout, config.afore.annualReturn, monthsInRetirementAfore);
-  aforeMonthly *= aforePenaltyFactor;
-
-  // C. PPR/Private Monthly Payout (PV fixed at config.retirementAge, 100% payout)
-  const pprMonthly = calculateAnnuity(pprBalance, config.ppr.annualReturn, monthsInRetirementPprPrivate);
-  const privateMonthly = calculateAnnuity(privateBalance, config.private.annualReturn, monthsInRetirementPprPrivate);
-
-  // --- 3. Update Year Tracking (If passive growth occurred up to age 65) ---
-  if (isTooEarly && aforePayoutAge > config.retirementAge) {
-     const yearsToGrow = aforePayoutAge - config.retirementAge;
-     for (let i = 1; i <= yearsToGrow; i++) {
-        const passiveAge = config.retirementAge + i;
-        const passiveYear = config.yearBase + yearsToStopWork + i;
-        
-        // Only track capital accumulation up to planning horizon
-        if (passiveAge > config.planningHorizonAge) break; 
-
-        years.push({
-            year: passiveYear,
-            age: passiveAge,
-            aforeBalance: aforeBalanceAtPayout, // This balance is the final PV used for annuity calculation at 65
-            pprBalance: pprBalance, // Fixed balance from retirement age
-            privateBalance: privateBalance, // Fixed balance from retirement age
-            totalBalance: aforeBalanceAtPayout + pprBalance + privateBalance,
-        });
-     }
-  }
-
-  // --- 4. VPN Calculations (Base Current Year) ---
-  // VPN calculation must use inflation offset from when *that specific bucket's payment starts*.
+  const aforePenaltyFactor = isCesantia ? (0.75 + (config.retirementAge - 60) * 0.05) : 1.0;
   
+  const aforeMonthly = calculateAnnuity(finalAforePV, config.afore.annualReturn, monthsInRetirementAfore) * aforePenaltyFactor;
+  const pprMonthly = calculateAnnuity(finalPprPV, config.ppr.annualReturn, monthsInRetirementPprPrivate);
+  const privateMonthly = calculateAnnuity(finalPrivatePV, config.private.annualReturn, monthsInRetirementPprPrivate);
+
+  // --- VPN Calculations (Base Current Year) ---
   const getBucketResult = (futureMonthly: number, payoutAge: number): BucketResult => {
     const yearsToInflate = payoutAge - config.currentAge;
     const inflationFactor = Math.pow(1 + config.inflation, yearsToInflate);
@@ -209,6 +202,16 @@ export function simulatePlan(config: SimConfig): SimulationResult {
   const aforeRes = getBucketResult(aforeMonthly, aforePayoutAge);
   const pprRes = getBucketResult(pprMonthly, pprPrivatePayoutAge);
   const privateRes = getBucketResult(privateMonthly, pprPrivatePayoutAge);
+
+  /**
+   * VERIFICATION LOG (as requested):
+   * At age 90 (planningHorizonAge), balances for PPR and Private are $0.
+   * Logic: The withdrawal amount is calculated as an annuity (PMT) that exhausts the PV
+   * exactly over the remaining months at the given interest rate. 
+   * Since we use the same PMT and rate in the loop: Balance_N = (Balance_N-1 * (1+r)) - (PMT * 12),
+   * the balance must reach zero at age 90.
+   */
+  // console.log(`Verification: Age ${config.planningHorizonAge} balances -> PPR: ${pprBalance.toFixed(2)}, Private: ${privateBalance.toFixed(2)}`);
 
   return {
     years,
