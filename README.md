@@ -8,12 +8,12 @@
 ## ✨ Key Features
 
 ### 🧮 Financial Simulator
-- General configuration: current age, retirement age, planning horizon, expected annual inflation.
-- AFORE (IMSS Pension): input gross monthly salary → automatic IMSS contribution estimate (6.5% default), current balance and expected return.
-- PPR (Personal Retirement Plan): current balance, monthly contribution, expected return, estimated annual SAT tax refund (NPV-aware).
-- Private Savings (CETES, Funds, Stocks): balance, monthly contribution, expected return.
-- Independent Worker Mode (RESICO / Freelance): toggles calculations (RFC gen., IVA 0% rules, IMSS M10 notes).
-- Dynamic legal pension logic (Ley 97): supports payout start ages, early retirement penalties (60–64 % scale) and passive growth behavior.
+- **General config:** current age, retirement age, planning horizon, expected annual inflation.
+- **AFORE (IMSS Pension):** gross monthly salary → automatic IMSS contribution estimate (6.5% default), current balance and expected return.
+- **PPR (Personal Retirement Plan):** multi-account support — up to 3 PPR accounts, each with its own balance, monthly contribution, expected return, and estimated annual SAT tax refund (NPV-aware).
+- **Private Savings (CETES, Funds, Stocks):** balance, monthly contribution, expected return.
+- **Independent Worker Mode (RESICO / Freelance):** toggles calculations (RFC gen., IVA 0% rules, IMSS M10 notes).
+- **Dynamic legal pension logic (Ley 97):** payout start ages, early retirement penalties (60–64% scale) and passive growth behaviour.
 
 ### 📊 Results & Insights
 - Estimated future monthly pension in future pesos and NPV (Net Present Value, current-year pesos).
@@ -22,23 +22,30 @@
 - Side-by-side comparisons (e.g., retire at 65 vs retire earlier).
 - Tooltips and inline explanations (legal notes and penalties) to educate the user.
 
+### 🎯 Goal Tracker (Pension Goal)
+- Set a target monthly income for retirement.
+- Automatically calculates how much extra you need to save in each PPR account to meet your goal.
+- One-click **Apply** pre-fills the PPR contribution fields so you can instantly simulate the updated plan.
+- Smart warning when your existing AFORE projection already exceeds the target.
+
 ### 🤖 AI Recommendations (Powered by Gemini)
 - 3 quantitative, personalized recommendations in one bilingual API call (ES/EN).
-- Recommendations ALWAYS expressed in NPV (current-year pesos) with explicit mapping from future pesos → NPV.
+- Recommendations always expressed in NPV (current-year pesos) with explicit mapping from future pesos → NPV.
 - Each recommendation includes: numeric figures (MXN), emoji, impact label (High/Medium/Low).
-- Cooldown: 30-second rate limit on regenerating tips (client-side).
+- 23-second rate limit cooldown on regenerating tips (client-side).
 - Fallback tips available if AI request fails.
 
 ### 📄 Native PDF Export
-- Browser-native export using `window.print()` and `@media print` styles for readable, ink-friendly PDF output.
-- PDF contains header (title, generation date), input summary, results, chart, AI tips and disclaimer footer.
-- PDF always styled in Light Mode for readability regardless of current theme.
+- Browser-native export using `window.print()` and `@media print` styles.
+- Readable, ink-friendly output with: title, generation date, input summary, results, chart, AI tips, and disclaimer footer.
+- Always rendered in Light Mode for readability regardless of current theme.
 
 ### 🌐 Internationalization & UX
-- Full Spanish / English support with language toggle.
-- Dark Mode default; Light Mode toggle available.
+- Full **Spanish / English** support with one-click language toggle.
+- **Dark Mode** default; Light Mode toggle available — both settings are fully independent.
+- Real-time input validation (e.g., age-out-of-range shows an instant red error).
 - Responsive design (mobile-first).
-- Inputs with + / − controls and perfect alignment.
+- Inputs with +/− controls and perfect alignment.
 - Footer credit to Product Manager with portfolio link.
 
 ---
@@ -60,15 +67,55 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 
 ### Phase 4 — AI Integration (Technical Story)
 - Iterative debugging: 404 (v1beta vs v1 SDK), quota 429 errors on multiple Gemini models.
-- Final model choice: `gemini-2.5-flash-lite` or `gemini-flash-lite-latest` depending on availability.
-- Prompt engineering to ensure NPV outputs, bilingual results, numeric recommendations and stable temperature (0.8).
+- Final model choice: `gemini-2.5-flash-lite` / `gemini-flash-lite-latest` depending on availability.
+- Prompt engineering: NPV outputs, bilingual results, numeric recommendations, stable temperature (0.8).
 
 ### Phase 5 — Legal & Production Polish
-- Implemented Ley 97 logic: passive growth if retiring < 60, early retirement percentages (60:75%, 61:80%, 62:85%, 63:90%, 64:95%, 65+:100%).
-- UX: Legal warnings, tooltips, and info badges to explain reductions and payout ages.
+- Implemented Ley 97: passive growth if retiring < 60, early retirement percentages (60:75%→65+:100%).
+- UX: legal warnings, tooltips, and info badges to explain reductions and payout ages.
 - Native PDF export via browser print.
-- Footer with PM credit and portfolio link.
 - Deployed on Vercel with env-based API key.
+
+### Phase 6 — Advanced Features & Quality
+- **Multi-account PPR:** up to 3 independent PPR accounts, each individually configurable, with dynamic add/remove controls.
+- **Goal Tracker:** target-pension modal that back-calculates required PPR contributions and populates the form with one click.
+- **Real-time validation:** instant age-range error without needing to trigger a simulation.
+- **Playwright end-to-end testing:** 10 automated browser tests covering all critical user flows (see `/tests`).
+
+---
+
+## 🧪 Testing (Playwright)
+
+End-to-end browser tests are written with **[Playwright](https://playwright.dev/)** — no framework dependency, plain Node.js scripts.
+
+### What's tested
+
+| Test | Feature |
+|------|---------|
+| `test-01-page-load.js` | Page loads and main heading is visible |
+| `test-02-language-toggle.js` | ES ↔ EN language switch |
+| `test-03-theme-toggle.js` | Light / Dark theme toggle |
+| `test-04-realtime-validation.js` | Instant age validation error |
+| `test-05-loading-spinner.js` | Spinner appears on simulate click |
+| `test-06-simulation-flow.js` | Full simulation returns results |
+| `test-07-ppr-multi-account.js` | Add / remove PPR accounts, cap at 3 |
+| `test-08-goal-tracker.js` | Goal Tracker modal + Apply button |
+| `test-09-goal-tracker-warning.js` | Target-too-low warning message |
+| `test-10-independent-toggles.js` | Language & theme toggles are independent |
+
+### Running tests
+
+```bash
+# Install Playwright (first time only)
+npx playwright install chromium
+
+# Run all tests against the local dev server
+npm run dev &
+node tests/test-01-page-load.js
+# … or run any individual test file
+```
+
+All 10 tests pass ✅
 
 ---
 
@@ -82,6 +129,7 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 | Components | shadcn/ui |
 | AI | Google Gemini (flash-lite) |
 | AI SDK | @google/generative-ai 0.24.1 |
+| E2E Testing | Playwright |
 | Deployment | Vercel |
 
 ---
@@ -90,15 +138,15 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-user/retiro-mx.git
-cd retiro-mx
+git clone https://github.com/Pxblx7/retirement-calc-lite.git
+cd retirement-calc-lite
 
 # 2. Install dependencies
 npm install
 
 # 3. Configure environment variables
 cp .env.example .env.local
-# Edit .env.local and add your GEMINI_API_KEY (Google AI Studio) or set the provider in Roo config
+# Edit .env.local and add your GEMINI_API_KEY (get one free at https://aistudio.google.com)
 
 # 4. Run in development
 npm run dev
@@ -107,5 +155,6 @@ npm run dev
 ---
 
 ## 📝 Credits & Portfolio
-Developed by **Pablo Arroyo** (Product Manager).  
-Explore more projects: [https://pxblx7.github.io/pablo-arroyo-product-manager/](https://pxblx7.github.io/pablo-arroyo-product-manager/)
+Developed by **Pablo Arroyo** — Product Manager.  
+📧 pab.arroyo@outlook.com  
+🔗 [Portfolio](https://pxblx7.github.io/pablo-arroyo-product-manager/)

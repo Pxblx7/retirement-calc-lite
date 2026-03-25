@@ -6,6 +6,20 @@ __v0_jsx-dev-runtime.ts
 # Common ignores
 node_modules/
 .next/
+out/
 .env*.local
 .DS_Store
 .env
+Thumbs.db
+
+# Vercel
+.vercel
+
+# AI tooling — local development only, not part of the project
+antigravity-skills/
+.roo/
+.gemini/
+
+# Playwright test artifacts
+test-results/
+playwright-report/

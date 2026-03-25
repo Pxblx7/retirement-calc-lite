@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { AssumptionsPanel } from "@/components/simulator/assumptions-panel"
 import { ResultsPanel } from "@/components/simulator/results-panel"
@@ -13,13 +13,15 @@ import {
   type SimulationResult,
 } from "@/lib/simulation"
 import { useI18n, type Locale } from "@/lib/i18n"
+import { aggregatePPRs, createDefaultPPR, type PPRConfig } from "@/lib/ppr-helpers"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Sun, Moon, Globe, Calculator } from "lucide-react"
 
+// ─── Header utils ─────────────────────────────────────────────────────────────
+
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-
   return (
     <Button
       variant="ghost"
@@ -36,12 +38,10 @@ function ThemeToggle() {
 
 function LanguageToggle() {
   const { locale, setLocale } = useI18n()
-
   const toggle = () => {
     const next: Locale = locale === "en" ? "es" : "en"
     setLocale(next)
   }
-
   return (
     <Button
       variant="ghost"
@@ -56,22 +56,117 @@ function LanguageToggle() {
   )
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function SimulatorPage() {
   const [config, setConfig] = useState<SimConfig>(getDefaultConfig)
   const [result, setResult] = useState<SimulationResult | null>(null)
   const [aiTrigger, setAiTrigger] = useState(0)
   const { t } = useI18n()
 
+  // F1 – Multiple PPR accounts
+  const [pprList, setPPRList] = useState<PPRConfig[]>([createDefaultPPR(0)])
+
+  // F2 – Loading spinner
+  const [isSimulating, setIsSimulating] = useState(false)
+
+  // F4 – Validation errors
+  const [formErrors, setFormErrors] = useState<
+    Partial<Record<"currentAge" | "retirementAge" | "planningHorizonAge", string>>
+  >({})
+
+  // ─── Real-time validation ─────────────────────────────────────────────────
+  
+  const validateAgesRealtime = useCallback(() => {
+    const errors: typeof formErrors = {}
+    
+    // Invalid age values (edge cases)
+    if (config.currentAge < 1 || config.currentAge > 120) {
+      errors.currentAge = t("error.invalidAge")
+    }
+    if (config.retirementAge < 1 || config.retirementAge > 120) {
+      errors.retirementAge = t("error.invalidAge")
+    }
+    if (config.planningHorizonAge < 1 || config.planningHorizonAge > 110) {
+      errors.planningHorizonAge = t("error.invalidAge")
+    }
+    
+    // Relationship errors (only if values are valid)
+    if (config.currentAge >= 1 && config.retirementAge >= 1 && config.currentAge >= config.retirementAge) {
+      errors.currentAge = t("error.currentAgeMustBeLess")
+      errors.retirementAge = t("error.retirementAgeMustBeLess")
+    }
+    if (config.retirementAge >= 1 && config.planningHorizonAge >= 1 && config.retirementAge >= config.planningHorizonAge) {
+      errors.retirementAge = t("error.retirementAgeMustBeLess")
+      errors.planningHorizonAge = t("error.planningHorizonMustBeLarger")
+    }
+    if (config.planningHorizonAge > 110) {
+      errors.planningHorizonAge = t("error.planningHorizonTooLarge")
+    }
+    
+    setFormErrors(errors)
+    return errors
+  }, [config, t])
+
+  // Run validation on config changes
+  useEffect(() => {
+    validateAgesRealtime()
+  }, [config.currentAge, config.retirementAge, config.planningHorizonAge, validateAgesRealtime])
+
+  // ─── Handlers ───────────────────────────────────────────────────────────────
+
   const handleChange = useCallback((updates: Partial<SimConfig>) => {
     setConfig((prev) => ({ ...prev, ...updates }))
   }, [])
 
-  const handleSimulate = useCallback(() => {
-    const res = simulatePlan(config)
-    setResult(res)
-    // Trigger AI fetch
-    setAiTrigger((prev) => prev + 1)
-  }, [config])
+  /** F4 – Age validation (for simulate button) */
+  const validateAges = (): boolean => {
+    const errors: typeof formErrors = {}
+    if (config.currentAge >= config.retirementAge) {
+      errors.currentAge = t("error.currentAgeMustBeLess")
+      errors.retirementAge = t("error.retirementAgeMustBeLess")
+    }
+    if (config.retirementAge >= config.planningHorizonAge) {
+      errors.retirementAge = t("error.retirementAgeMustBeLess")
+      errors.planningHorizonAge = t("error.planningHorizonMustBeLarger")
+    }
+    if (config.planningHorizonAge > 110) {
+      errors.planningHorizonAge = t("error.planningHorizonTooLarge")
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
+      return false
+    }
+    setFormErrors({})
+    return true
+  }
+
+  const handleSimulate = useCallback(async () => {
+    if (!validateAges()) return
+
+    setIsSimulating(true)
+    try {
+      // F1 – Aggregate all PPR accounts into the single config.ppr field
+      const aggregated = aggregatePPRs(pprList)
+      const simConfig: SimConfig = { ...config, ppr: aggregated }
+
+      // Yield to the browser paint so the spinner renders
+      await new Promise<void>((resolve) => setTimeout(resolve, 800))
+
+      const res = simulatePlan(simConfig)
+      setResult(res)
+      // Also keep config in sync so child components show correct data
+      setConfig(simConfig)
+
+      // Trigger AI fetch
+      setAiTrigger((prev) => prev + 1)
+    } finally {
+      setIsSimulating(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config, pprList])
+
+  // ─── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 flex flex-col">
@@ -108,6 +203,11 @@ export default function SimulatorPage() {
                 config={config}
                 onChange={handleChange}
                 onSimulate={handleSimulate}
+                pprList={pprList}
+                onPPRListChange={setPPRList}
+                isSimulating={isSimulating}
+                formErrors={formErrors}
+                result={result}
               />
             </ScrollArea>
           </aside>
@@ -121,7 +221,7 @@ export default function SimulatorPage() {
               </h2>
               {result ? (
                 <div className="flex flex-col gap-8">
-                  <ResultsPanel config={config} result={result} />
+                  <ResultsPanel config={config} result={result} pprList={pprList} />
                   <RetirementExplainer />
                 </div>
               ) : (
@@ -129,12 +229,8 @@ export default function SimulatorPage() {
                   <div className="bg-muted size-16 rounded-full flex items-center justify-center mb-4">
                     <Calculator className="size-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-xl font-bold text-foreground">
-                    {t("empty.title")}
-                  </h3>
-                  <p className="text-muted-foreground mt-2 max-w-xs">
-                    {t("empty.subtitle")}
-                  </p>
+                  <h3 className="text-xl font-bold text-foreground">{t("empty.title")}</h3>
+                  <p className="text-muted-foreground mt-2 max-w-xs">{t("empty.subtitle")}</p>
                 </div>
               )}
             </section>
@@ -159,9 +255,9 @@ export default function SimulatorPage() {
         <div className="mx-auto max-w-[1440px] px-4 flex flex-col items-center gap-2 text-center">
           <p className="text-sm text-muted-foreground">
             {t("footer.builtBy")}{" "}
-            <a 
-              href="https://pxblx7.github.io/pablo-arroyo-product-manager/" 
-              target="_blank" 
+            <a
+              href="https://pxblx7.github.io/pablo-arroyo-product-manager/"
+              target="_blank"
               rel="noopener noreferrer"
               className="font-bold text-primary hover:underline"
             >

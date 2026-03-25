@@ -73,6 +73,39 @@ const translations = {
     // Footer
     "footer.builtBy": "Designed and built by",
     "footer.onlyEducational": "For educational purposes only.",
+
+    // Validation errors (F4)
+    "error.retirementBeforeCurrent": "Retirement age must be greater than current age.",
+    "error.horizonBeforeRetirement": "Planning horizon must be greater than retirement age.",
+    "error.minRetirement": "Retirement age must be at least 50.",
+
+    // PPR multi-account labels (F1)
+    "field.pprLabel": "Plan name (optional)",
+    "bucket.addPPR": "+ Add PPR account",
+    "bucket.removePPR": "Remove",
+
+    // Results – PPR breakdown (F1)
+    "results.pprBreakdown": "PPR Accounts Breakdown",
+
+    // Validation – age checks (F4) – additional keys
+    "error.currentAgeMustBeLess": "Current age must be less than retirement age.",
+    "error.retirementAgeMustBeLess": "Retirement age must be less than planning horizon.",
+    "error.planningHorizonMustBeLarger": "Planning horizon must be larger than retirement age.",
+    "error.planningHorizonTooLarge": "Planning horizon cannot exceed 110 years.",
+    "error.invalidAge": "Please enter a valid age (1-120).",
+
+    // Goal Tracker (F3)
+    "goal.open": "🎯 Pension Goal",
+    "goal.title": "🎯 Pension Goal",
+    "goal.targetLabel": "Target monthly pension (today's pesos)",
+    "goal.compute": "Calculate contributions",
+    "goal.aforeNPV": "AFORE projected NPV",
+    "goal.pprRequired": "Additional monthly PPR (total)",
+    "goal.privateRequired": "Additional monthly Private Savings",
+    "goal.apply": "Apply to my simulator",
+    "goal.alreadyCovered": "✅ Your AFORE already covers this target!",
+    "goal.close": "Close",
+    "goal.targetTooLow": "Your current projection already exceeds this target. Consider setting a higher goal.",
   },
   es: {
     "header.title": "RETIRO MX",
@@ -131,6 +164,39 @@ const translations = {
 
     "footer.builtBy": "Diseñado y desarrollado por",
     "footer.onlyEducational": "Solo para fines educativos.",
+
+    // Validation errors (F4)
+    "error.retirementBeforeCurrent": "La edad de retiro debe ser mayor que la edad actual.",
+    "error.horizonBeforeRetirement": "El horizonte de planeación debe ser mayor que la edad de retiro.",
+    "error.minRetirement": "La edad de retiro debe ser de al menos 50 años.",
+
+    // PPR multi-account labels (F1)
+    "field.pprLabel": "Nombre del plan (opcional)",
+    "bucket.addPPR": "+ Agregar otra cuenta PPR",
+    "bucket.removePPR": "Eliminar",
+
+    // Results – PPR breakdown (F1)
+    "results.pprBreakdown": "Desglose de cuentas PPR",
+
+    // Validation – age checks (F4) – additional keys
+    "error.currentAgeMustBeLess": "La edad actual debe ser menor que la edad de retiro.",
+    "error.retirementAgeMustBeLess": "La edad de retiro debe ser menor que el horizonte de planeación.",
+    "error.planningHorizonMustBeLarger": "El horizonte de planeación debe ser mayor que la edad de retiro.",
+    "error.planningHorizonTooLarge": "El horizonte de planeación no puede superar 110 años.",
+    "error.invalidAge": "Por favor ingresa una edad válida (1-120).",
+
+    // Goal Tracker (F3)
+    "goal.open": "🎯 Meta de Pensión",
+    "goal.title": "🎯 Meta de Pensión",
+    "goal.targetLabel": "Pensión mensual objetivo (pesos de hoy)",
+    "goal.compute": "Calcular aportaciones",
+    "goal.aforeNPV": "VPN estimado del AFORE",
+    "goal.pprRequired": "Aportación mensual adicional PPR (total)",
+    "goal.privateRequired": "Aportación mensual adicional Ahorro Privado",
+    "goal.apply": "Aplicar a mi simulador",
+    "goal.alreadyCovered": "✅ ¡Tu AFORE solo ya cubre esta meta!",
+    "goal.close": "Cerrar",
+    "goal.targetTooLow": "Tu proyección actual ya supera esta meta. Considera establecer una meta más alta.",
   },
 } as const
 

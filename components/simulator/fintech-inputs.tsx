@@ -32,6 +32,11 @@ export function CurrencyField({
     [onChange]
   )
 
+  const handleFocus = useCallback((e: React.FocusEvent<HTMLInputElement>) => {
+    // Prevent auto-selection of text on focus
+    e.target.setSelectionRange(e.target.value.length, e.target.value.length)
+  }, [])
+
   return (
     <div className={cn("flex flex-col gap-1", className)}>
       <Label className="text-xs text-muted-foreground truncate">{label}</Label>
@@ -50,6 +55,7 @@ export function CurrencyField({
         <NumericFormat
           value={value}
           onValueChange={handleValueChange}
+          onFocus={handleFocus}
           thousandSeparator=","
           decimalSeparator="."
           decimalScale={0}
@@ -81,6 +87,8 @@ interface YearFieldProps {
   value: number
   onChange: (v: number) => void
   className?: string
+  /** Optional validation error message shown in red below the field */
+  error?: string
 }
 
 export function YearField({
@@ -88,6 +96,7 @@ export function YearField({
   value,
   onChange,
   className,
+  error,
 }: YearFieldProps) {
   const handleValueChange = useCallback(
     (values: NumberFormatValues) => {
@@ -118,7 +127,10 @@ export function YearField({
           allowNegative={false}
           allowLeadingZeros={false}
           customInput={Input}
-          className="h-8 text-sm tabular-nums text-center min-w-0"
+          className={cn(
+            "h-8 text-sm tabular-nums text-center min-w-0",
+            error && "border-destructive focus-visible:ring-destructive/30"
+          )}
         />
         <Button
           type="button"
@@ -132,6 +144,11 @@ export function YearField({
           <Plus className="size-3" />
         </Button>
       </div>
+      {error && (
+        <p role="alert" className="text-xs text-destructive mt-0.5">
+          {error}
+        </p>
+      )}
     </div>
   )
 }
