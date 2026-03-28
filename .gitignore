@@ -20,6 +20,17 @@ antigravity-skills/
 .roo/
 .gemini/
 
-# Playwright test artifacts
+# Playwright & Testing artifacts
 test-results/
 playwright-report/
+playwright.config.ts
+e2e/
+tests/
+local_tests/
+*.test.ts
+
+# AI Artifacts
+implementation_plan.md
+task.md
+walkthrough.md
+

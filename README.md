@@ -9,9 +9,9 @@
 
 ### 🧮 Financial Simulator
 - **General config:** current age, retirement age, planning horizon, expected annual inflation.
-- **AFORE (IMSS Pension):** gross monthly salary → automatic IMSS contribution estimate (6.5% default), current balance and expected return.
-- **PPR (Personal Retirement Plan):** multi-account support — up to 3 PPR accounts, each with its own balance, monthly contribution, expected return, and estimated annual SAT tax refund (NPV-aware).
-- **Private Savings (CETES, Funds, Stocks):** balance, monthly contribution, expected return.
+- **AFORE (IMSS Pension):** gross monthly salary → automatic IMSS contribution estimate (6.5% default), current balance, expected return, and **Annual Increment %** tracking for progressive savings.
+- **PPR (Personal Retirement Plan):** multi-account support — up to 3 PPR accounts, each with its own balance, monthly contribution, **Annual Increment %**, and projected SAT tax refund. Includes native **Article 151 vs Article 93 toggles** individually, alongside inline curated recommendations for platforms like **Fintual and Rankia**.
+- **Private Savings (CETES, Funds, Stocks):** balance, monthly contribution, **Annual Increment %**, and expected return.
 - **Independent Worker Mode (RESICO / Freelance):** toggles calculations (RFC gen., IVA 0% rules, IMSS M10 notes).
 - **Dynamic legal pension logic (Ley 97):** payout start ages, early retirement penalties (60–64% scale) and passive growth behaviour.
 
@@ -20,6 +20,7 @@
 - Total Monthly Package: combined AFORE + PPR + Private Savings.
 - Wealth growth chart and year-by-year detail view.
 - Side-by-side comparisons (e.g., retire at 65 vs retire earlier).
+- **ISR Legal Warning Badge:** Automatically maps tax liabilities during retirement based on simulated balances and Article 151 constraints.
 - Tooltips and inline explanations (legal notes and penalties) to educate the user.
 
 ### 🎯 Goal Tracker (Pension Goal)
@@ -78,9 +79,13 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 
 ### Phase 6 — Advanced Features & Quality
 - **Multi-account PPR:** up to 3 independent PPR accounts, each individually configurable, with dynamic add/remove controls.
+- **Article 151 vs 93 Selection:** Specific configuration toggle inside each PPR allowing native distinction between tax-advantaged (151) and capital-gains (93) profiles.
 - **Goal Tracker:** target-pension modal that back-calculates required PPR contributions and populates the form with one click.
 - **Real-time validation:** instant age-range error without needing to trigger a simulation.
-- **Playwright end-to-end testing:** 10 automated browser tests covering all critical user flows (see `/tests`).
+- **Playwright end-to-end testing:** custom Node.js Playwright scripts (in `/tests`) and automated browser test workflows safely isolated in `/local_tests`.
+- **Annual Increment %:** Set an expected annual contribution increase (%) for AFORE, PPR, and Private Funds.
+- **Curated Suggestions:** Educational links pushing users to Rankia and Fintual for better PPR market insights.
+- **ISR Warning Logic:** Natively alerts players on Results if their plan subjects them to ISR post-retirement (Art. 151).
 
 ---
 
@@ -105,6 +110,8 @@ End-to-end browser tests are written with **[Playwright](https://playwright.dev/
 
 ### Running tests
 
+You can run the existing manual Node tests:
+
 ```bash
 # Install Playwright (first time only)
 npx playwright install chromium
@@ -115,7 +122,12 @@ node tests/test-01-page-load.js
 # … or run any individual test file
 ```
 
-All 10 tests pass ✅
+Or you can run the new isolated Playwright framework suite from `local_tests`:
+```bash
+npx playwright test --config=local_tests/playwright.config.ts
+```
+
+All tests pass ✅
 
 ---
 

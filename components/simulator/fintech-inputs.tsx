@@ -16,6 +16,7 @@ interface CurrencyFieldProps {
   onChange: (v: number) => void
   step?: number
   className?: string
+  disabled?: boolean
 }
 
 export function CurrencyField({
@@ -24,6 +25,7 @@ export function CurrencyField({
   onChange,
   step = 1000,
   className,
+  disabled = false,
 }: CurrencyFieldProps) {
   const handleValueChange = useCallback(
     (values: NumberFormatValues) => {
@@ -49,6 +51,7 @@ export function CurrencyField({
           onClick={() => onChange(Math.max(0, value - step))}
           tabIndex={-1}
           aria-label="Decrease"
+          disabled={disabled}
         >
           <Minus className="size-3" />
         </Button>
@@ -63,6 +66,7 @@ export function CurrencyField({
           prefix="$"
           customInput={Input}
           className="h-8 text-sm tabular-nums text-right min-w-0"
+          disabled={disabled}
         />
         <Button
           type="button"
@@ -72,6 +76,7 @@ export function CurrencyField({
           onClick={() => onChange(value + step)}
           tabIndex={-1}
           aria-label="Increase"
+          disabled={disabled}
         >
           <Plus className="size-3" />
         </Button>

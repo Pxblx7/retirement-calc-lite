@@ -41,18 +41,20 @@ function BucketResultCard({
   res,
   tooltip,
   isTotal = false,
+  warningBadge,
 }: {
   title: string
   res: BucketResult
   tooltip?: string
   isTotal?: boolean
+  warningBadge?: React.ReactNode
 }) {
   const { t, locale } = useI18n()
   const fmt = (v: number) => formatCurrency(v, locale)
 
   return (
-    <Card className={isTotal ? "border-primary/50 bg-primary/5" : ""}>
-      <CardContent className="p-4">
+    <Card className={isTotal ? "border-primary/50 bg-primary/5 h-full" : "h-full"}>
+      <CardContent className="p-4 flex flex-col h-full">
         <div className="flex items-center gap-2 mb-3">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
           {tooltip && (
@@ -90,6 +92,12 @@ function BucketResultCard({
             <p className="text-xl font-black text-primary tabular-nums">{fmt(res.vpnMonthly)}</p>
           </div>
         </div>
+        
+        {warningBadge && (
+          <div className="mt-auto pt-3">
+            {warningBadge}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -102,11 +110,18 @@ function SummaryTab({ config, result, pprList }: ResultsPanelProps) {
   // Total monthly PPR contribution across all accounts (used for share %)
   const pprTotal = pprList?.reduce((s, p) => s + p.monthlyContribution, 0) ?? 0
 
+  const hasArt151 = pprList?.some(p => (p.taxArticle ?? 'art151') === 'art151') ?? true
+  const pprWarningBadge = hasArt151 ? (
+    <div className="inline-flex w-full items-center justify-center rounded bg-amber-500/10 px-2 py-1 text-[10px] sm:text-xs font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20 text-center">
+      {t("results.art151Warning")}
+    </div>
+  ) : null
+
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <BucketResultCard title={t("bucket.afore")} res={result.afore} tooltip={t("bucket.aforeTooltip")} />
-        <BucketResultCard title={t("bucket.ppr")} res={result.ppr} tooltip={t("bucket.pprTooltip")} />
+        <BucketResultCard title={t("bucket.ppr")} res={result.ppr} tooltip={t("bucket.pprTooltip")} warningBadge={pprWarningBadge} />
         <BucketResultCard title={t("bucket.private")} res={result.private} tooltip={t("bucket.privateTooltip")} />
         <BucketResultCard title={t("results.totalPackage")} res={result.total} isTotal />
       </div>

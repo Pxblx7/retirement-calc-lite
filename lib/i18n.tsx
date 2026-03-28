@@ -13,11 +13,11 @@ const translations = {
     "header.subtitle": "SINGLE-PERSON RETIREMENT SIMULATOR FOR MEXICO",
 
     // Sections
-    "section.config": "General Settings",
-    "section.savings": "My Savings",
-    "section.results": "Results",
-    "section.ai": "AI Recommendations",
-    "section.portfolio": "Portfolio Tips",
+    "section.config": "⚙️ General Settings",
+    "section.savings": "💰 My Savings",
+    "section.results": "📊 Results",
+    "section.ai": "🤖 AI Recommendations",
+    "section.portfolio": "💡 Portfolio Tips",
 
     // Assumptions Panel
     "assumptions.general": "General Assumptions",
@@ -106,6 +106,34 @@ const translations = {
     "goal.alreadyCovered": "✅ Your AFORE already covers this target!",
     "goal.close": "Close",
     "goal.targetTooLow": "Your current projection already exceeds this target. Consider setting a higher goal.",
+
+    // Feature 1 — Annual contribution increment
+    "field.annualIncrementToggle": "Increase contribution annually",
+    "field.annualIncrement": "Annual increase",
+    "field.annualIncrementTooltip": "Your contribution grows each year like a salary raise. Formula: Contribution₀ × (1 + %)^year. Applies only until retirement age.",
+
+    // Feature 2 — PPR tax article selector
+    "ppr.taxArticle": "Tax Article",
+    "ppr.art151Label": "Art. 151 (Deductible)",
+    "ppr.art93Label": "Art. 93 (Exempt at 65+)",
+    "ppr.art151Desc": "Your contributions are tax-deductible now (deducible). At withdrawal, pension income is subject to ISR.",
+    "ppr.art93Desc": "No deduction now, but retirement income at 65+ is fully exempt from ISR.",
+    "ppr.art93SatTooltip": "No SAT refund — Art. 93 gives you tax exemption at retirement instead.",
+    "results.art151Warning": "⚠️ Subject to ISR at withdrawal",
+
+    // Feature 3 — Fund comparison tips
+    "tips.fundTitle": "How to choose your PPR fund?",
+    "tips.fundBullet1": "Net return ≥ 7% over 10 years",
+    "tips.fundBullet2": "Annual fees ≤ 1.5%",
+    "tips.fundBullet3": "Risk profile matching your time horizon",
+    "tips.fundRankia": "Editorial comparison of the best PPRs",
+    "tips.fundFintual": "Transparent historical returns",
+    "tips.fundDisclaimer": "Past performance does not guarantee future results.",
+
+    // Feature 5 — System theme
+    "theme.light": "Switch to dark mode",
+    "theme.dark": "Switch to system theme",
+    "theme.system": "Switch to light mode",
   },
   es: {
     "header.title": "RETIRO MX",
@@ -197,6 +225,34 @@ const translations = {
     "goal.alreadyCovered": "✅ ¡Tu AFORE solo ya cubre esta meta!",
     "goal.close": "Cerrar",
     "goal.targetTooLow": "Tu proyección actual ya supera esta meta. Considera establecer una meta más alta.",
+
+    // Feature 1 — Annual contribution increment
+    "field.annualIncrementToggle": "Incrementar aportación cada año",
+    "field.annualIncrement": "Incremento anual",
+    "field.annualIncrementTooltip": "Tu aportación crece cada año como un aumento de sueldo. Fórmula: Aportación₀ × (1 + %)^año. Solo aplica hasta tu edad de retiro.",
+
+    // Feature 2 — PPR tax article selector
+    "ppr.taxArticle": "Artículo Fiscal",
+    "ppr.art151Label": "Art. 151 (Deducible)",
+    "ppr.art93Label": "Art. 93 (Exento a los 65+)",
+    "ppr.art151Desc": "Tus aportaciones son deducibles de ISR ahora. Al retiro, la pensión está sujeta a ISR.",
+    "ppr.art93Desc": "Sin deducción ahora, pero tus retiros a los 65+ están exentos de ISR.",
+    "ppr.art93SatTooltip": "Sin devolución del SAT — el Art. 93 te da exención de ISR en el retiro en cambio.",
+    "results.art151Warning": "⚠️ Sujeto a ISR en el retiro",
+
+    // Feature 3 — Fund comparison tips
+    "tips.fundTitle": "¿Cómo elegir tu fondo PPR?",
+    "tips.fundBullet1": "Rendimiento neto ≥ 7% a 10 años",
+    "tips.fundBullet2": "Comisiones ≤ 1.5% anual",
+    "tips.fundBullet3": "Perfil de riesgo acorde a tu horizonte de tiempo",
+    "tips.fundRankia": "Comparativa editorial de los mejores PPR",
+    "tips.fundFintual": "Rendimiento histórico transparente",
+    "tips.fundDisclaimer": "Rendimientos históricos no garantizan resultados futuros.",
+
+    // Feature 5 — System theme
+    "theme.light": "Cambiar a modo oscuro",
+    "theme.dark": "Usar tema del sistema",
+    "theme.system": "Cambiar a modo claro",
   },
 } as const
 

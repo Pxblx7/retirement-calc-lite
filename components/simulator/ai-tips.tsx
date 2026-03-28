@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { RefreshCw, Sparkles } from "lucide-react"
 import { useI18n } from "@/lib/i18n"
 import type { SimConfig, SimulationResult } from "@/lib/simulation"
+import type { PPRConfig } from "@/lib/ppr-helpers"
 import { toast } from "sonner"
 
 interface Tip {
@@ -19,10 +20,11 @@ interface Tip {
 interface AITipsProps {
   config: SimConfig
   result: SimulationResult
+  pprList?: PPRConfig[]
   triggerFetch?: number // Used to trigger fetch from parent
 }
 
-export function AITips({ config, result, triggerFetch }: AITipsProps) {
+export function AITips({ config, result, pprList, triggerFetch }: AITipsProps) {
   const [tips, setTips] = useState<Tip[]>([])
   const [loading, setLoading] = useState(false)
   const [cooldown, setCooldown] = useState(0)
@@ -55,6 +57,7 @@ export function AITips({ config, result, triggerFetch }: AITipsProps) {
           privateMonthlyNPV: result.private.vpnMonthly,
           totalMonthlyFuture: result.total.futureMonthly,
           totalMonthlyNPV: result.total.vpnMonthly,
+          pprTaxArticles: pprList?.map(p => p.taxArticle ?? 'art151') ?? [],
         }),
       })
       const data = await response.json()

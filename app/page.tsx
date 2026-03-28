@@ -16,25 +16,46 @@ import { useI18n, type Locale } from "@/lib/i18n"
 import { aggregatePPRs, createDefaultPPR, type PPRConfig } from "@/lib/ppr-helpers"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { Sun, Moon, Globe, Calculator } from "lucide-react"
+import { Sun, Moon, Monitor, Globe, Calculator } from "lucide-react"
 
 // ─── Header utils ─────────────────────────────────────────────────────────────
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { t } = useI18n()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  const cycle = () => {
+    if (theme === "light") setTheme("dark")
+    else if (theme === "dark") setTheme("system")
+    else setTheme("light")
+  }
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="icon" className="rounded-full" aria-label="Toggle theme" disabled>
+        <Monitor className="size-5" />
+      </Button>
+    )
+  }
+
+  const ariaKey = theme === "light" ? "theme.light" : theme === "dark" ? "theme.dark" : "theme.system"
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+      onClick={cycle}
       className="rounded-full"
-      aria-label="Toggle theme"
+      aria-label={t(ariaKey as Parameters<typeof t>[0])}
     >
-      <Sun className="size-5 dark:hidden" />
-      <Moon className="size-5 hidden dark:block" />
+      {theme === "light" && <Sun className="size-5" />}
+      {theme === "dark" && <Moon className="size-5" />}
+      {(theme === "system" || !theme) && <Monitor className="size-5" />}
     </Button>
   )
 }
+
 
 function LanguageToggle() {
   const { locale, setLocale } = useI18n()

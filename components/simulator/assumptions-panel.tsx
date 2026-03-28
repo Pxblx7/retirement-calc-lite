@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { CurrencyField, YearField, PercentField } from "@/components/simulator/fintech-inputs"
 import { GoalTrackerModal } from "@/components/simulator/goal-tracker-modal"
 import type { SimConfig, SimulationResult } from "@/lib/simulation"
 import type { PPRConfig } from "@/lib/ppr-helpers"
 import { createDefaultPPR } from "@/lib/ppr-helpers"
 import { useI18n } from "@/lib/i18n"
-import { Info, Loader2 } from "lucide-react"
+import { ExternalLink, Info, Loader2 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -234,6 +235,40 @@ export function AssumptionsPanel({
                 onChange={(v) => onChange({ afore: { ...config.afore, annualReturn: v } })}
               />
             </div>
+            
+            {/* F1 - Annual contribution increment toggle (Afore) */}
+            <div className="flex flex-col gap-2 border-t border-border/40 pt-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {t("field.annualIncrementToggle")}
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="size-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs text-xs">{t("field.annualIncrementTooltip")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Switch
+                  checked={(config.afore.annualContributionIncrement ?? 0) > 0}
+                  onCheckedChange={(on) =>
+                    onChange({ afore: { ...config.afore, annualContributionIncrement: on ? 0.03 : 0 } })
+                  }
+                />
+              </div>
+              {(config.afore.annualContributionIncrement ?? 0) > 0 && (
+                <PercentField
+                  label={t("field.annualIncrement")}
+                  value={config.afore.annualContributionIncrement ?? 0.03}
+                  onChange={(v) => onChange({ afore: { ...config.afore, annualContributionIncrement: v } })}
+                />
+              )}
+            </div>
           </div>
 
           {/* ── PPR (F1: dynamic multi-account list) ───────────────────────── */}
@@ -282,6 +317,32 @@ export function AssumptionsPanel({
                   )}
                 </div>
 
+                {/* F2 – Tax article toggle */}
+                <div className="flex gap-2 rounded-md border border-border/40 bg-background p-2">
+                  <button
+                    type="button"
+                    onClick={() => updatePPR(i, { taxArticle: 'art151', satRefund: ppr.satRefund })}
+                    className={`flex-1 rounded text-xs py-1 font-semibold transition-colors ${
+                      (ppr.taxArticle ?? 'art151') === 'art151'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {t("ppr.art151Label")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updatePPR(i, { taxArticle: 'art93', satRefund: 0 })}
+                    className={`flex-1 rounded text-xs py-1 font-semibold transition-colors ${
+                      ppr.taxArticle === 'art93'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {t("ppr.art93Label")}
+                  </button>
+                </div>
+
                 {/* Balance + Contribution */}
                 <div className="grid grid-cols-2 gap-3">
                   <CurrencyField
@@ -305,7 +366,9 @@ export function AssumptionsPanel({
                   />
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-1">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label className={`text-xs font-medium ${
+                        ppr.taxArticle === 'art93' ? 'text-muted-foreground/40 line-through' : 'text-muted-foreground'
+                      }`}>
                         {t("field.satRefund")}
                       </label>
                       <TooltipProvider>
@@ -314,17 +377,54 @@ export function AssumptionsPanel({
                             <Info className="size-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="max-w-xs text-xs">{t("field.satRefundHelper")}</p>
+                            <p className="max-w-xs text-xs">
+                              {ppr.taxArticle === 'art93' ? t("ppr.art93SatTooltip") : t("field.satRefundHelper")}
+                            </p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     </div>
                     <CurrencyField
                       label=""
-                      value={ppr.satRefund}
+                      value={ppr.taxArticle === 'art93' ? 0 : ppr.satRefund}
                       onChange={(v) => updatePPR(i, { satRefund: v })}
+                      disabled={ppr.taxArticle === 'art93'}
                     />
                   </div>
+                </div>
+
+                {/* F1 – Annual contribution increment toggle */}
+                <div className="flex flex-col gap-2 border-t border-border/40 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("field.annualIncrementToggle")}
+                      </label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="size-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{t("field.annualIncrementTooltip")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <Switch
+                      checked={(ppr.annualContributionIncrement ?? 0) > 0}
+                      onCheckedChange={(on) =>
+                        updatePPR(i, { annualContributionIncrement: on ? 0.03 : 0 })
+                      }
+                    />
+                  </div>
+                  {(ppr.annualContributionIncrement ?? 0) > 0 && (
+                    <PercentField
+                      label={t("field.annualIncrement")}
+                      value={ppr.annualContributionIncrement ?? 0.03}
+                      onChange={(v) => updatePPR(i, { annualContributionIncrement: v })}
+                    />
+                  )}
                 </div>
               </div>
             ))}
@@ -378,7 +478,79 @@ export function AssumptionsPanel({
               value={config.private.annualReturn}
               onChange={(v) => onChange({ private: { ...config.private, annualReturn: v } })}
             />
+            
+            {/* F1 - Annual contribution increment toggle (Private) */}
+            <div className="flex flex-col gap-2 border-t border-border/40 pt-2 mt-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {t("field.annualIncrementToggle")}
+                  </label>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="size-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs text-xs">{t("field.annualIncrementTooltip")}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <Switch
+                  checked={(config.private.annualContributionIncrement ?? 0) > 0}
+                  onCheckedChange={(on) =>
+                    onChange({ private: { ...config.private, annualContributionIncrement: on ? 0.03 : 0 } })
+                  }
+                />
+              </div>
+              {(config.private.annualContributionIncrement ?? 0) > 0 && (
+                <PercentField
+                  label={t("field.annualIncrement")}
+                  value={config.private.annualContributionIncrement ?? 0.03}
+                  onChange={(v) => onChange({ private: { ...config.private, annualContributionIncrement: v } })}
+                />
+              )}
+            </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* F3 – Fund comparison tips card */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary">
+            💡 {t("tips.fundTitle")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-1">
+            {(["tips.fundBullet1", "tips.fundBullet2", "tips.fundBullet3"] as const).map((key) => (
+              <li key={key} className="text-[11px] text-muted-foreground flex items-start gap-1.5">
+                <span className="text-primary mt-0.5">•</span>
+                {t(key)}
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-col gap-1 border-t border-border/40 pt-2">
+            <a
+              href="https://www.rankia.mx/planes-de-pensiones/mejores"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+            >
+              <ExternalLink className="size-3" /> Rankia MX — {t("tips.fundRankia")}
+            </a>
+            <a
+              href="https://fintual.mx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+            >
+              <ExternalLink className="size-3" /> Fintual — {t("tips.fundFintual")}
+            </a>
+          </div>
+          <p className="text-[10px] text-muted-foreground/60 italic">{t("tips.fundDisclaimer")}</p>
         </CardContent>
       </Card>
 

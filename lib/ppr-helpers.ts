@@ -8,6 +8,10 @@ export interface PPRConfig {
   monthlyContribution: number
   annualReturn: number
   satRefund: number
+  /** Art. 151 (deductible, taxed at withdrawal) or Art. 93 (no deduction, exempt at 65+) */
+  taxArticle?: 'art151' | 'art93'
+  /** Optional compound annual growth rate for contributions (0 = disabled). */
+  annualContributionIncrement?: number
 }
 
 // ─── Factory ─────────────────────────────────────────────────────────────────
@@ -19,6 +23,8 @@ export function createDefaultPPR(index: number = 0): PPRConfig {
     monthlyContribution: 0,
     annualReturn: 0.07,
     satRefund: 0,
+    taxArticle: 'art151',
+    annualContributionIncrement: 0,
   }
 }
 
@@ -36,7 +42,8 @@ export function aggregatePPRs(pprs: PPRConfig[]): SimConfig['ppr'] {
 
   const totalBalance  = pprs.reduce((s, p) => s + p.initialBalance,       0)
   const totalContrib  = pprs.reduce((s, p) => s + p.monthlyContribution,  0)
-  const totalSatRefund = pprs.reduce((s, p) => s + p.satRefund,            0)
+  // Art. 93 accounts provide no SAT refund (tax exemption at retirement instead)
+  const totalSatRefund = pprs.reduce((s, p) => s + (p.taxArticle === 'art93' ? 0 : p.satRefund), 0)
 
   let weightedReturn: number
   if (totalContrib > 0) {
@@ -47,11 +54,18 @@ export function aggregatePPRs(pprs: PPRConfig[]): SimConfig['ppr'] {
     weightedReturn = pprs.reduce((s, p) => s + p.annualReturn, 0) / pprs.length
   }
 
+  // Weighted average contribution increment
+  const totalIncrementWeight = totalContrib > 0 ? totalContrib : pprs.length
+  const weightedIncrement = totalContrib > 0
+    ? pprs.reduce((s, p) => s + (p.annualContributionIncrement ?? 0) * p.monthlyContribution, 0) / totalIncrementWeight
+    : pprs.reduce((s, p) => s + (p.annualContributionIncrement ?? 0), 0) / totalIncrementWeight
+
   return {
     initialBalance:    totalBalance,
     monthlyContribution: totalContrib,
     annualReturn:      weightedReturn,
     satRefund:         totalSatRefund,
+    annualContributionIncrement: weightedIncrement,
   }
 }
 
@@ -101,8 +115,12 @@ export function computePPRDetailByYear(
       // Update balance — but not at the last year (engine breaks at planningHorizonAge)
       if (row.age < planningHorizonAge) {
         if (row.age < retirementAge) {
-          // Accumulation: matches engine formula exactly
-          balance = (balance + ppr.monthlyContribution * 12) * (1 + ppr.annualReturn) + ppr.satRefund
+          // Accumulation: matches engine formula exactly (with optional compound increment)
+          const yearIdx = row.age - (years[0]?.age ?? retirementAge)
+          const increment = ppr.annualContributionIncrement ?? 0
+          const contrib = ppr.monthlyContribution * Math.pow(1 + increment, yearIdx)
+          const effectiveSatRefund = ppr.taxArticle === 'art93' ? 0 : ppr.satRefund
+          balance = (balance + contrib * 12) * (1 + ppr.annualReturn) + effectiveSatRefund
         } else {
           // Withdrawal
           balance = balance * (1 + ppr.annualReturn) - monthlyWithdrawal * 12

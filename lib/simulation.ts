@@ -4,6 +4,8 @@ export interface BucketConfig {
   initialBalance: number
   monthlyContribution: number
   annualReturn: number
+  /** Optional compound annual growth rate for contributions (0 = disabled). Stops at retirementAge. */
+  annualContributionIncrement?: number
 }
 
 export interface SimConfig {
@@ -141,8 +143,10 @@ export function simulatePlan(config: SimConfig): SimulationResult {
 
     // A. AFORE Logic
     if (age < config.retirementAge) {
-      // Accumulation
-      aforeBalance = (aforeBalance + config.afore.monthlyContribution * 12) * (1 + config.afore.annualReturn);
+      // Accumulation — apply compound increment if configured
+      const aforeIncrement = config.afore.annualContributionIncrement ?? 0
+      const aforeContrib = config.afore.monthlyContribution * Math.pow(1 + aforeIncrement, yearIdx)
+      aforeBalance = (aforeBalance + aforeContrib * 12) * (1 + config.afore.annualReturn);
     } else if (age < aforePayoutAge) {
       // Passive Growth (Scenario A: Early retirement, wait until 65)
       aforeBalance = aforeBalance * (1 + config.afore.annualReturn);
@@ -156,8 +160,10 @@ export function simulatePlan(config: SimConfig): SimulationResult {
 
     // B. PPR Logic
     if (age < config.retirementAge) {
-      // Accumulation
-      pprBalance = (pprBalance + config.ppr.monthlyContribution * 12) * (1 + config.ppr.annualReturn) + config.ppr.satRefund;
+      // Accumulation — apply compound increment if configured
+      const pprIncrement = config.ppr.annualContributionIncrement ?? 0
+      const pprContrib = config.ppr.monthlyContribution * Math.pow(1 + pprIncrement, yearIdx)
+      pprBalance = (pprBalance + pprContrib * 12) * (1 + config.ppr.annualReturn) + config.ppr.satRefund;
     } else {
       // Withdrawal Phase
       const pvAtStart = years.find(y => y.age === pprPrivatePayoutAge)?.pprBalance || 0;
@@ -167,8 +173,10 @@ export function simulatePlan(config: SimConfig): SimulationResult {
 
     // C. Private Logic
     if (age < config.retirementAge) {
-      // Accumulation
-      privateBalance = (privateBalance + config.private.monthlyContribution * 12) * (1 + config.private.annualReturn);
+      // Accumulation — apply compound increment if configured
+      const privateIncrement = config.private.annualContributionIncrement ?? 0
+      const privateContrib = config.private.monthlyContribution * Math.pow(1 + privateIncrement, yearIdx)
+      privateBalance = (privateBalance + privateContrib * 12) * (1 + config.private.annualReturn);
     } else {
       // Withdrawal Phase
       const pvAtStart = years.find(y => y.age === pprPrivatePayoutAge)?.privateBalance || 0;

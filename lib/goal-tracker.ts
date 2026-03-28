@@ -45,10 +45,12 @@ function fvLoop(
   annualReturn: number,
   years: number,
   satRefund: number = 0,
+  annualIncrement: number = 0,
 ): number {
   let b = balance
   for (let i = 0; i < years; i++) {
-    b = (b + monthlyContrib * 12) * (1 + annualReturn) + satRefund
+    const contrib = monthlyContrib * Math.pow(1 + annualIncrement, i)
+    b = (b + contrib * 12) * (1 + annualReturn) + satRefund
   }
   return b
 }
@@ -64,11 +66,12 @@ function findRequiredMonthlyContrib(
   annualReturn: number,
   years: number,
   satRefund: number = 0,
+  annualIncrement: number = 0,
 ): number {
   if (years <= 0) return 0
 
   // Already on track at zero contribution?
-  const fvAtZero = fvLoop(currentBalance, 0, annualReturn, years, satRefund)
+  const fvAtZero = fvLoop(currentBalance, 0, annualReturn, years, satRefund, annualIncrement)
   if (fvAtZero >= targetFV) return 0
 
   // Generous upper bound: if we contribute targetFV every year for `years` years
@@ -77,7 +80,7 @@ function findRequiredMonthlyContrib(
 
   for (let i = 0; i < 80; i++) {
     const mid = (lo + hi) / 2
-    const fv = fvLoop(currentBalance, mid, annualReturn, years, satRefund)
+    const fv = fvLoop(currentBalance, mid, annualReturn, years, satRefund, annualIncrement)
     if (fv < targetFV) lo = mid
     else hi = mid
   }
@@ -115,6 +118,8 @@ export function computeGoalThreshold(
     config.afore.monthlyContribution,
     config.afore.annualReturn,
     aforeAccumYears,
+    0,
+    config.afore.annualContributionIncrement ?? 0,
   )
   // Cesantia penalty: ~75% at 60, linearly improving to 100% at 65
   const penalty       = isCesantia ? 0.75 + (config.retirementAge - 60) * 0.05 : 1.0
@@ -164,9 +169,13 @@ export function computeGoalThreshold(
       ? pprList.reduce((s, p) => s + p.annualReturn * p.initialBalance, 0) / totalPPRBalance
       : pprList.reduce((s, p) => s + p.annualReturn, 0) / Math.max(pprList.length, 1)
 
+  const pprAggIncrement = totalPPRContrib > 0
+    ? pprList.reduce((s, p) => s + (p.annualContributionIncrement ?? 0) * p.monthlyContribution, 0) / totalPPRContrib
+    : pprList.reduce((s, p) => s + (p.annualContributionIncrement ?? 0), 0) / Math.max(pprList.length, 1)
+
   const pprTargetFuture  = remainingFuture * wPPR
   const pprTargetLump    = annuityPV(pprTargetFuture, pprAggReturn, monthsPPRPrivate)
-  const totalPPRSatRefund = pprList.reduce((s, p) => s + p.satRefund, 0)
+  const totalPPRSatRefund = pprList.reduce((s, p) => s + (p.taxArticle === 'art93' ? 0 : p.satRefund), 0)
 
   const pprTotalRequired  = findRequiredMonthlyContrib(
     totalPPRBalance,
@@ -174,6 +183,7 @@ export function computeGoalThreshold(
     pprAggReturn,
     yearsToRetirement,
     totalPPRSatRefund,
+    pprAggIncrement,
   )
   const pprTotalMonthly   = Math.max(0, pprTotalRequired - totalPPRContrib)
 
@@ -185,6 +195,8 @@ export function computeGoalThreshold(
     privateTargetLump,
     config.private.annualReturn,
     yearsToRetirement,
+    0, // satRefund
+    config.private.annualContributionIncrement ?? 0,
   )
   const privateMonthly = Math.max(0, privateRequired - privateContrib)
 
