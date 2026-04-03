@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Scenario,
   ScenarioColor,
@@ -31,7 +31,6 @@ function readScenarios(): Scenario[] {
     if (!Array.isArray(parsed)) return []
     return parsed as Scenario[]
   } catch {
-    // Corrupted data — start fresh
     return []
   }
 }
@@ -52,13 +51,9 @@ function writeScenarios(scenarios: Scenario[]): void {
 export interface UseScenariosReturn {
   scenarios: Scenario[]
   isLocalStorageAvailable: boolean
-  /** Save a new scenario (max 3). Returns the saved scenario or null if at limit. */
   saveScenario: (name: string, config: SimConfig, result: SimulationResult | null) => Scenario | null
-  /** Update an existing scenario by id (partial update). */
   updateScenario: (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => void
-  /** Delete a scenario by id. */
   deleteScenario: (id: string) => void
-  /** True when the max number of scenarios has been saved. */
   isFull: boolean
 }
 
@@ -66,72 +61,77 @@ export function useScenarios(): UseScenariosReturn {
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [isLocalStorageAvailable] = useState<boolean>(() => isStorageAvailable())
 
-  // Load from localStorage on mount (client-only)
+  // Track whether the initial load from localStorage has completed.
+  // This prevents the mutation functions from writing an empty array
+  // over real data before the mount read has finished.
+  const hasLoadedRef = useRef(false)
+
+  // ── Load from localStorage on mount (client-only) ──────────────────────────
   useEffect(() => {
     if (isLocalStorageAvailable) {
-      setScenarios(readScenarios())
+      const loaded = readScenarios()
+      setScenarios(loaded)
+      hasLoadedRef.current = true
     }
-  }, [isLocalStorageAvailable])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  // Persist to localStorage whenever scenarios change
-  useEffect(() => {
-    if (!isLocalStorageAvailable) return
-    try {
-      writeScenarios(scenarios)
-    } catch {
-      // Quota error is surfaced per-operation in saveScenario
-    }
-  }, [scenarios, isLocalStorageAvailable])
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+  // Each mutation writes directly to localStorage (no reactive write effect).
+  // This avoids the race condition where a write effect fires with stale [] state.
 
   const saveScenario = useCallback(
     (name: string, config: SimConfig, result: SimulationResult | null): Scenario | null => {
-      if (scenarios.length >= MAX_SCENARIOS) return null
-
-      const slotIndex = scenarios.length
-      const color: ScenarioColor = SCENARIO_COLORS[slotIndex]
-
-      const newScenario: Scenario = {
-        id: crypto.randomUUID(),
-        name: name.trim() || `Escenario ${slotIndex + 1}`,
-        config,
-        result,
-        createdAt: Date.now(),
-        color,
-      }
+      let newScenario: Scenario | null = null
 
       setScenarios((prev) => {
-        const updated = [...prev, newScenario]
-        if (isLocalStorageAvailable) {
-          try {
-            writeScenarios(updated)
-          } catch {
-            // Will be shown by the component via a toast
-          }
+        if (prev.length >= MAX_SCENARIOS) return prev
+
+        const slotIndex = prev.length
+        const color: ScenarioColor = SCENARIO_COLORS[slotIndex]
+
+        newScenario = {
+          id: crypto.randomUUID(),
+          name: name.trim() || `Escenario ${slotIndex + 1}`,
+          config,
+          result,
+          createdAt: Date.now(),
+          color,
         }
+
+        const updated = [...prev, newScenario]
+        if (isLocalStorageAvailable) writeScenarios(updated)
         return updated
       })
 
       return newScenario
     },
-    [scenarios.length, isLocalStorageAvailable]
+    [isLocalStorageAvailable]
   )
 
   const updateScenario = useCallback(
     (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => {
-      setScenarios((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, ...partial } : s))
-      )
+      setScenarios((prev) => {
+        const updated = prev.map((s) => (s.id === id ? { ...s, ...partial } : s))
+        if (isLocalStorageAvailable) writeScenarios(updated)
+        return updated
+      })
     },
-    []
+    [isLocalStorageAvailable]
   )
 
-  const deleteScenario = useCallback((id: string) => {
-    setScenarios((prev) => {
-      // Re-assign colors to remaining scenarios by position
-      const filtered = prev.filter((s) => s.id !== id)
-      return filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
-    })
-  }, [])
+  const deleteScenario = useCallback(
+    (id: string) => {
+      setScenarios((prev) => {
+        const filtered = prev.filter((s) => s.id !== id)
+        // Re-assign colors to remaining slots after deletion
+        const recolored = filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
+        if (isLocalStorageAvailable) writeScenarios(recolored)
+        return recolored
+      })
+    },
+    [isLocalStorageAvailable]
+  )
 
   return {
     scenarios,
