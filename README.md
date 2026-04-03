@@ -9,7 +9,7 @@
 
 ### 🧮 Financial Simulator
 - **General config:** current age, retirement age, planning horizon, expected annual inflation.
-- **AFORE (IMSS Pension):** gross monthly salary → automatic IMSS contribution estimate (6.5% default), current balance, expected return, and **Annual Increment %** tracking for progressive savings.
+- **AFORE (IMSS Pension):** gross monthly salary → automatic IMSS contribution estimate (**9.5% default, 2025 Reforma Pensiones rate**), current balance, expected return, and **Annual Increment %** tracking for progressive savings.
 - **PPR (Personal Retirement Plan):** multi-account support — up to 3 PPR accounts, each with its own balance, monthly contribution, **Annual Increment %**, and projected SAT tax refund. Includes native **Article 151 vs Article 93 toggles** individually, alongside inline curated recommendations for platforms like **Fintual and Rankia**.
 - **Private Savings (CETES, Funds, Stocks):** balance, monthly contribution, **Annual Increment %**, and expected return.
 - **Independent Worker Mode (RESICO / Freelance):** toggles calculations (RFC gen., IVA 0% rules, IMSS M10 notes).
@@ -17,7 +17,7 @@
 
 ### 📊 Results & Insights
 - Estimated future monthly pension in future pesos and NPV (Net Present Value, current-year pesos).
-- Total Monthly Package: combined AFORE + PPR + Private Savings.
+- Total Monthly Package: combined AFORE + PPR + Private Savings, with tooltip explaining the **Retiro Programado simulation model**.
 - Wealth growth chart and year-by-year detail view.
 - Side-by-side comparisons (e.g., retire at 65 vs retire earlier).
 - **ISR Legal Warning Badge:** Automatically maps tax liabilities during retirement based on simulated balances and Article 151 constraints.
@@ -48,6 +48,15 @@
 - Responsive design (mobile-first).
 - Inputs with +/− controls and perfect alignment.
 - Footer credit to Product Manager with portfolio link.
+
+### 🔀 Scenario Comparison (Compare Mode)
+- **Save up to 3 scenarios** locally from any simulation run, with a custom name.
+- **Compare page (`/comparar`):** side-by-side card layout showing all saved scenarios with key metrics.
+- **Winner detection:** automatic "Mejor Pensión 🏆" badge highlighting the scenario with the highest NPV.
+- **Overlay chart:** multi-line wealth growth chart overlaying all scenarios for visual comparison.
+- **VPN-first highlight:** NPV (current-year pesos) shown as the primary green metric on each card, matching the Summary tab logic.
+- **Consistent footer and theming** across main simulator and compare pages.
+- Scenario persistence via `localStorage` (Phase 2 will add cloud sync via Supabase).
 
 ---
 
@@ -86,6 +95,17 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 - **Annual Increment %:** Set an expected annual contribution increase (%) for AFORE, PPR, and Private Funds.
 - **Curated Suggestions:** Educational links pushing users to Rankia and Fintual for better PPR market insights.
 - **ISR Warning Logic:** Natively alerts players on Results if their plan subjects them to ISR post-retirement (Art. 151).
+
+### Phase 7 — Scenario Comparison & Simulation Accuracy
+- **3-Scenario Save & Compare system:** users can save up to 3 simulation runs as named scenarios, persisted in `localStorage`.
+- **Compare page (`/comparar`):** full-width dashboard with card-per-scenario layout, winner badge, and overlay chart.
+- **VPN-first design:** NPV highlighted as the primary decision metric across both the Summary tab and Compare page.
+- **AFORE contribution rate updated to 9.5%** (2025 Reforma Pensiones rate, previously 6.5%). Live salary-change handler updated consistently.
+- **Retiro Programado model transparency:** tooltip on Total Package card explains the simulation model to users.
+- **"¿Cómo elegir tu fondo PPR?" relocated** from sidebar to a dedicated full-width section after Portfolio Tips for better readability.
+- **Save Scenario button repositioned** to appear directly below the results summary cards for higher visibility.
+- **Simulation state reset:** Save Scenario button resets automatically when a new simulation is run (prevents accidental duplicate saves).
+- **Bug fix:** replaced `crypto.randomUUID()` with a cross-environment-safe ID generator to prevent crashes on non-HTTPS local network testing.
 
 ---
 

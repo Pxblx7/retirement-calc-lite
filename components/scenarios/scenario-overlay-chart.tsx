@@ -105,25 +105,27 @@ export function ScenarioOverlayChart({ scenarios }: ScenarioOverlayChartProps) {
       </h2>
       <ResponsiveContainer width="100%" height={280}>
         <LineChart data={data} margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
           <XAxis
             dataKey="age"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11 }}
+            className="fill-muted-foreground"
             label={{
               value: locale === 'es' ? 'Edad' : 'Age',
               position: 'insideBottom',
               offset: -2,
               fontSize: 11,
-              fill: 'hsl(var(--muted-foreground))',
+              className: 'fill-muted-foreground',
             }}
           />
           <YAxis
             tickFormatter={formatAxisValue}
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11 }}
+            className="fill-muted-foreground"
             width={58}
           />
           <Tooltip

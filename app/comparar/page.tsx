@@ -161,8 +161,23 @@ export default function CompararPage() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border/40 py-4 text-center text-xs text-muted-foreground/60">
-        RETIRO MX — {locale === 'es' ? 'Solo con fines educativos' : 'For educational purposes only'}
+      <footer className="border-t border-border/40 bg-card/30 py-8 mt-12">
+        <div className="mx-auto max-w-[1440px] px-4 flex flex-col items-center gap-2 text-center">
+          <p className="text-sm text-muted-foreground">
+            {locale === 'es' ? 'Diseñado y programado por' : 'Designed and built by'}{" "}
+            <a
+              href="https://pxblx7.github.io/pablo-arroyo-product-manager/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-primary hover:underline"
+            >
+              Pablo Arroyo — Product Manager
+            </a>
+          </p>
+          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
+            © {new Date().getFullYear()} RETIRO MX. {locale === 'es' ? 'Solo con fines educativos' : 'For educational purposes only'}
+          </p>
+        </div>
       </footer>
     </div>
   )

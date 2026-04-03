@@ -90,55 +90,47 @@ export function useScenarios(): UseScenariosReturn {
 
   const saveScenario = useCallback(
     (name: string, config: SimConfig, result: SimulationResult | null): Scenario | null => {
-      let newScenario: Scenario | null = null
+      if (scenarios.length >= MAX_SCENARIOS) return null
 
-      setScenarios((prev) => {
-        if (prev.length >= MAX_SCENARIOS) return prev
+      const slotIndex = scenarios.length
+      const color: ScenarioColor = SCENARIO_COLORS[slotIndex]
 
-        const slotIndex = prev.length
-        const color: ScenarioColor = SCENARIO_COLORS[slotIndex]
+      const newScenario: Scenario = {
+        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+        name: name.trim() || `Escenario ${slotIndex + 1}`,
+        config,
+        result,
+        createdAt: Date.now(),
+        color,
+      }
 
-        newScenario = {
-          id: crypto.randomUUID(),
-          name: name.trim() || `Escenario ${slotIndex + 1}`,
-          config,
-          result,
-          createdAt: Date.now(),
-          color,
-        }
-
-        const updated = [...prev, newScenario]
-        if (isLocalStorageAvailable) writeScenarios(updated)
-        return updated
-      })
+      const updated = [...scenarios, newScenario]
+      if (isLocalStorageAvailable) writeScenarios(updated)
+      setScenarios(updated)
 
       return newScenario
     },
-    [isLocalStorageAvailable]
+    [scenarios, isLocalStorageAvailable]
   )
 
   const updateScenario = useCallback(
     (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => {
-      setScenarios((prev) => {
-        const updated = prev.map((s) => (s.id === id ? { ...s, ...partial } : s))
-        if (isLocalStorageAvailable) writeScenarios(updated)
-        return updated
-      })
+      const updated = scenarios.map((s) => (s.id === id ? { ...s, ...partial } : s))
+      if (isLocalStorageAvailable) writeScenarios(updated)
+      setScenarios(updated)
     },
-    [isLocalStorageAvailable]
+    [scenarios, isLocalStorageAvailable]
   )
 
   const deleteScenario = useCallback(
     (id: string) => {
-      setScenarios((prev) => {
-        const filtered = prev.filter((s) => s.id !== id)
-        // Re-assign colors to remaining slots after deletion
-        const recolored = filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
-        if (isLocalStorageAvailable) writeScenarios(recolored)
-        return recolored
-      })
+      const filtered = scenarios.filter((s) => s.id !== id)
+      // Re-assign colors to remaining slots after deletion
+      const recolored = filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
+      if (isLocalStorageAvailable) writeScenarios(recolored)
+      setScenarios(recolored)
     },
-    [isLocalStorageAvailable]
+    [scenarios, isLocalStorageAvailable]
   )
 
   return {

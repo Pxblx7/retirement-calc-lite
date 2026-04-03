@@ -53,7 +53,7 @@ export function AssumptionsPanel({
   // ─── AFORE helpers ─────────────────────────────────────────────────────────
 
   const handleSalaryChange = (salary: number) => {
-    const aforeContribution = Math.round(salary * 0.065)
+    const aforeContribution = Math.round(salary * 0.095)
     onChange({
       afore: {
         ...config.afore,
@@ -516,43 +516,6 @@ export function AssumptionsPanel({
         </CardContent>
       </Card>
 
-      {/* F3 – Fund comparison tips card */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs font-bold uppercase tracking-wider text-primary">
-            💡 {t("tips.fundTitle")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <ul className="flex flex-col gap-1">
-            {(["tips.fundBullet1", "tips.fundBullet2", "tips.fundBullet3"] as const).map((key) => (
-              <li key={key} className="text-[11px] text-muted-foreground flex items-start gap-1.5">
-                <span className="text-primary mt-0.5">•</span>
-                {t(key)}
-              </li>
-            ))}
-          </ul>
-          <div className="flex flex-col gap-1 border-t border-border/40 pt-2">
-            <a
-              href="https://www.rankia.mx/planes-de-pensiones/mejores"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[11px] text-primary hover:underline"
-            >
-              <ExternalLink className="size-3" /> Rankia MX — {t("tips.fundRankia")}
-            </a>
-            <a
-              href="https://fintual.mx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[11px] text-primary hover:underline"
-            >
-              <ExternalLink className="size-3" /> Fintual — {t("tips.fundFintual")}
-            </a>
-          </div>
-          <p className="text-[10px] text-muted-foreground/60 italic">{t("tips.fundDisclaimer")}</p>
-        </CardContent>
-      </Card>
 
       {/* F3 – Goal Tracker trigger button */}
       <Button

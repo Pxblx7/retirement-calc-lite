@@ -65,7 +65,7 @@ export function getDefaultConfig(): SimConfig {
     afore: {
       grossSalary: 10000,
       initialBalance: 0,
-      monthlyContribution: 650, // 6.5% of 10,000
+      monthlyContribution: 950, // 9.5% of 10,000 (2025 reforma pensiones rate)
       annualReturn: 0.06,
     },
     ppr: {

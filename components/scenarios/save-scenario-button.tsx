@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BookmarkPlus, BarChart3, Check } from 'lucide-react'
@@ -29,6 +29,13 @@ export function SaveScenarioButton({
   const [saved, setSaved] = useState(false)
   const [savedId, setSavedId] = useState<string | null>(null)
   const [quotaError, setQuotaError] = useState(false)
+
+  // Reset saved status if the user runs a new simulation
+  useEffect(() => {
+    setSaved(false)
+    setSavedId(null)
+    setIsOpen(false)
+  }, [result])
 
   const isEditing = !!editingScenarioId
 

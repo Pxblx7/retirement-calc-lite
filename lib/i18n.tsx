@@ -39,7 +39,7 @@ const translations = {
     // Fields
     "field.isIndependent": "I am an independent worker (RESICO / Freelance)",
     "field.grossSalary": "Gross Monthly Salary",
-    "field.aforeHelper": "Calculated as 6.5% of your salary (IMSS standard). You can edit it manually.",
+    "field.aforeHelper": "Calculated as ~9.5% of your salary (2025 reforma pensiones rate). You can edit it manually.",
     "field.currentBalance": "Current Balance",
     "field.monthlyContribution": "Monthly Contribution",
     "field.expectedReturn": "Expected annual return",
@@ -55,6 +55,7 @@ const translations = {
     "results.vpnTooltip": "NPV = Net Present Value. This shows what your future monthly income would be worth in today's pesos, adjusted for inflation.",
     "results.sustainability": "Your AFORE is modeled as a lifetime pension. Your PPR and Private Savings are calculated as a constant monthly income from your retirement age until age {age}.",
     "results.totalPackage": "Total Monthly Package",
+    "results.totalPackageTooltip": "This simulator uses a Retiro Programado model: your savings continue earning compound interest throughout retirement and are designed to be fully paid out by your planning horizon age. If you live beyond that age and chose Retiro Programado with your AFORE, funds could run out.",
     "results.noData": "No data",
     "results.year": "Year",
     "results.total": "Total Balance",
@@ -162,7 +163,7 @@ const translations = {
 
     "field.isIndependent": "Soy trabajador independiente (RESICO / Freelance)",
     "field.grossSalary": "Salario Mensual Bruto",
-    "field.aforeHelper": "Calculado como el 6.5% de tu salario (estándar IMSS). Puedes editarlo manualmente.",
+    "field.aforeHelper": "Calculado como ~9.5% de tu salario (tasa reforma pensiones 2025). Puedes editarlo manualmente.",
     "field.currentBalance": "Saldo actual",
     "field.monthlyContribution": "Aportación mensual",
     "field.expectedReturn": "Rendimiento anual esperado",
@@ -177,6 +178,7 @@ const translations = {
     "results.vpnTooltip": "VPN = Valor Presente Neto. Te muestra cuánto valdría tu pensión mensual en pesos de hoy, ajustando por inflación.",
     "results.sustainability": "Tu AFORE se modela como una pensión vitalicia. Tu PPR y Ahorro Privado se calculan para entregarte una renta mensual constante desde tu edad de retiro hasta los {age} años.",
     "results.totalPackage": "Paquete Mensual Total",
+    "results.totalPackageTooltip": "Este simulador usa un modelo de Retiro Programado: tu saldo sigue generando interés compuesto durante el retiro y está diseñado para agotarse exactamente en tu horizonte de planeación. Si vives más allá de esa edad con Retiro Programado real, los fondos podrían terminarse.",
     "results.noData": "Sin datos",
     "results.year": "Año",
     "results.total": "Saldo Total",

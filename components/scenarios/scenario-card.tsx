@@ -57,7 +57,7 @@ export function ScenarioCard({ scenario, isWinner, onDelete, onRename }: Scenari
       {/* Winner badge */}
       {isWinner && (
         <span
-          className={`absolute -top-3 left-4 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${colors.badgeBg} ${colors.badge} border ${colors.border}`}
+          className={`flex w-fit items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold mb-[-8px] ${colors.badgeBg} ${colors.badge} border ${colors.border}`}
         >
           <Trophy className="size-3" />
           {locale === 'es' ? 'Mejor pensión' : 'Best pension'}
@@ -126,11 +126,11 @@ export function ScenarioCard({ scenario, isWinner, onDelete, onRename }: Scenari
               {locale === 'es' ? 'Total' : 'Total'}
             </span>
             <div className="text-right">
-              <p className={`text-sm font-bold ${colors.badge}`}>
-                {formatCurrency(r.total.futureMonthly)}<span className="text-xs font-normal opacity-70">/mes</span>
+              <p className={`text-base font-bold ${colors.badge}`}>
+                {formatCurrency(r.total.vpnMonthly)}<span className="text-xs font-normal opacity-70">/mes (VPN)</span>
               </p>
               <p className="text-xs text-muted-foreground">
-                VPN {formatCurrency(r.total.vpnMonthly)}/mes
+                {formatCurrency(r.total.futureMonthly)}/mes (Futuro)
               </p>
             </div>
           </div>
@@ -180,8 +180,8 @@ function PensionRow({
     <div className="flex items-center justify-between px-1">
       <span className="text-xs text-muted-foreground">{label}</span>
       <div className="text-right">
-        <p className="text-sm font-medium">{formatCurrency(future)}<span className="text-xs text-muted-foreground">/mes</span></p>
-        <p className="text-xs text-muted-foreground">VPN {formatCurrency(npv)}</p>
+        <p className="text-sm font-medium">{formatCurrency(npv)} <span className="text-[10px] text-muted-foreground">VPN</span></p>
+        <p className="text-xs text-muted-foreground">{formatCurrency(future)}/mes</p>
       </div>
     </div>
   )

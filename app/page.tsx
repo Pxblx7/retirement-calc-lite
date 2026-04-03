@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { AssumptionsPanel } from "@/components/simulator/assumptions-panel"
 import { ResultsPanel } from "@/components/simulator/results-panel"
 import { AITips } from "@/components/simulator/ai-tips"
-import { PortfolioTips, RetirementExplainer } from "@/components/simulator/educational-sections"
+import { PortfolioTips, RetirementExplainer, PPRFundGuide } from "@/components/simulator/educational-sections"
 import {
   getDefaultConfig,
   simulatePlan,
@@ -295,14 +295,18 @@ function SimulatorPageInner() {
                       </span>
                     </div>
                   )}
-                  <ResultsPanel config={config} result={result} pprList={pprList} />
-                  <div className="flex justify-end">
-                    <SaveScenarioButton
-                      config={config}
-                      result={result}
-                      editingScenarioId={editingScenarioId}
-                    />
-                  </div>
+                  <ResultsPanel 
+                    config={config} 
+                    result={result} 
+                    pprList={pprList}
+                    actionButton={
+                      <SaveScenarioButton
+                        config={config}
+                        result={result}
+                        editingScenarioId={editingScenarioId}
+                      />
+                    }
+                  />
                   <RetirementExplainer />
                 </div>
               ) : (
@@ -326,6 +330,11 @@ function SimulatorPageInner() {
             {/* Portfolio Tips */}
             <section id="portfolio-tips">
               <PortfolioTips />
+            </section>
+
+            {/* PPR Fund Guide */}
+            <section id="ppr-fund-guide">
+              <PPRFundGuide />
             </section>
           </div>
         </div>

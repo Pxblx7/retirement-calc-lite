@@ -34,6 +34,7 @@ interface ResultsPanelProps {
   result: SimulationResult
   /** F1 – if multiple accounts, show a per-account breakdown */
   pprList?: PPRConfig[]
+  actionButton?: React.ReactNode
 }
 
 function BucketResultCard({
@@ -103,7 +104,7 @@ function BucketResultCard({
   )
 }
 
-function SummaryTab({ config, result, pprList }: ResultsPanelProps) {
+function SummaryTab({ config, result, pprList, actionButton }: ResultsPanelProps) {
   const { t, locale } = useI18n()
   const fmt = (v: number) => formatCurrency(v, locale)
 
@@ -123,8 +124,14 @@ function SummaryTab({ config, result, pprList }: ResultsPanelProps) {
         <BucketResultCard title={t("bucket.afore")} res={result.afore} tooltip={t("bucket.aforeTooltip")} />
         <BucketResultCard title={t("bucket.ppr")} res={result.ppr} tooltip={t("bucket.pprTooltip")} warningBadge={pprWarningBadge} />
         <BucketResultCard title={t("bucket.private")} res={result.private} tooltip={t("bucket.privateTooltip")} />
-        <BucketResultCard title={t("results.totalPackage")} res={result.total} isTotal />
+        <BucketResultCard title={t("results.totalPackage")} res={result.total} isTotal tooltip={t("results.totalPackageTooltip")} />
       </div>
+
+      {actionButton && (
+        <div className="flex justify-end mt-[-1rem]">
+          {actionButton}
+        </div>
+      )}
 
       {/* F1 – Per-account PPR breakdown (only when multiple accounts) */}
       {pprList && pprList.length > 1 && (
@@ -389,7 +396,7 @@ function FullTableTab({ config, result, pprList }: ResultsPanelProps) {
   )
 }
 
-export function ResultsPanel({ config, result, pprList }: ResultsPanelProps) {
+export function ResultsPanel({ config, result, pprList, actionButton }: ResultsPanelProps) {
   const { t } = useI18n()
 
   const handlePrint = () => {
@@ -418,7 +425,7 @@ export function ResultsPanel({ config, result, pprList }: ResultsPanelProps) {
           </div>
 
           <TabsContent value="summary" className="print:block">
-            <SummaryTab config={config} result={result} pprList={pprList} />
+            <SummaryTab config={config} result={result} pprList={pprList} actionButton={actionButton} />
           </TabsContent>
 
           <TabsContent value="chart" className="print:block print:mt-8">
