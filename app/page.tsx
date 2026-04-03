@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, Suspense } from "react"
 import { useTheme } from "next-themes"
+import { useSearchParams } from "next/navigation"
 import { AssumptionsPanel } from "@/components/simulator/assumptions-panel"
 import { ResultsPanel } from "@/components/simulator/results-panel"
 import { AITips } from "@/components/simulator/ai-tips"
@@ -16,7 +17,12 @@ import { useI18n, type Locale } from "@/lib/i18n"
 import { aggregatePPRs, createDefaultPPR, type PPRConfig } from "@/lib/ppr-helpers"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { Sun, Moon, Monitor, Globe, Calculator } from "lucide-react"
+import { Sun, Moon, Monitor, Globe, Calculator, BarChart3 } from "lucide-react"
+import Link from "next/link"
+import { SaveScenarioButton } from "@/components/scenarios/save-scenario-button"
+import { useScenarios } from "@/hooks/use-scenarios"
+import { SCENARIOS_STORAGE_KEY } from "@/lib/scenario-types"
+import type { Scenario } from "@/lib/scenario-types"
 
 // ─── Header utils ─────────────────────────────────────────────────────────────
 
@@ -79,11 +85,37 @@ function LanguageToggle() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function SimulatorPage() {
+function SimulatorPageInner() {
   const [config, setConfig] = useState<SimConfig>(getDefaultConfig)
   const [result, setResult] = useState<SimulationResult | null>(null)
   const [aiTrigger, setAiTrigger] = useState(0)
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+  const searchParams = useSearchParams()
+  const { scenarios } = useScenarios()
+
+  // Scenario editing state
+  const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null)
+  const [editingScenarioName, setEditingScenarioName] = useState<string | null>(null)
+
+  // Load scenario from URL param (?scenario=<id>)
+  useEffect(() => {
+    const scenarioId = searchParams?.get('scenario')
+    if (!scenarioId) return
+    try {
+      const raw = localStorage.getItem(SCENARIOS_STORAGE_KEY)
+      if (!raw) return
+      const stored: Scenario[] = JSON.parse(raw)
+      const found = stored.find((s) => s.id === scenarioId)
+      if (!found) return
+      setConfig(found.config)
+      setResult(found.result)
+      setEditingScenarioId(found.id)
+      setEditingScenarioName(found.name)
+    } catch {
+      // ignore parse errors
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // F1 – Multiple PPR accounts
   const [pprList, setPPRList] = useState<PPRConfig[]>([createDefaultPPR(0)])
@@ -208,6 +240,17 @@ export default function SimulatorPage() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {scenarios.length > 0 && (
+              <Link href="/comparar">
+                <Button variant="ghost" size="sm" className="gap-1.5">
+                  <BarChart3 className="size-4" />
+                  <span className="hidden sm:inline">
+                    {locale === 'es' ? 'Comparar' : 'Compare'}
+                  </span>
+                  <span className="text-xs font-bold">({scenarios.length})</span>
+                </Button>
+              </Link>
+            )}
             <LanguageToggle />
             <ThemeToggle />
           </div>
@@ -242,7 +285,24 @@ export default function SimulatorPage() {
               </h2>
               {result ? (
                 <div className="flex flex-col gap-8">
+                  {editingScenarioId && editingScenarioName && (
+                    <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-400">
+                      <span>✏️</span>
+                      <span>
+                        {locale === 'es'
+                          ? `Editando: "${editingScenarioName}" — Simula de nuevo para actualizar`
+                          : `Editing: "${editingScenarioName}" — Re-simulate to update`}
+                      </span>
+                    </div>
+                  )}
                   <ResultsPanel config={config} result={result} pprList={pprList} />
+                  <div className="flex justify-end">
+                    <SaveScenarioButton
+                      config={config}
+                      result={result}
+                      editingScenarioId={editingScenarioId}
+                    />
+                  </div>
                   <RetirementExplainer />
                 </div>
               ) : (
@@ -291,5 +351,13 @@ export default function SimulatorPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function SimulatorPage() {
+  return (
+    <Suspense>
+      <SimulatorPageInner />
+    </Suspense>
   )
 }

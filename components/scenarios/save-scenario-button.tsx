@@ -1,0 +1,157 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { BookmarkPlus, BarChart3, Check } from 'lucide-react'
+import { useScenarios } from '@/hooks/use-scenarios'
+import { SimConfig, SimulationResult } from '@/lib/simulation'
+import { MAX_SCENARIOS } from '@/lib/scenario-types'
+import Link from 'next/link'
+import { useI18n } from '@/lib/i18n'
+
+interface SaveScenarioButtonProps {
+  config: SimConfig
+  result: SimulationResult
+  /** If set, the button becomes "Update scenario" mode */
+  editingScenarioId?: string | null
+}
+
+export function SaveScenarioButton({
+  config,
+  result,
+  editingScenarioId,
+}: SaveScenarioButtonProps) {
+  const { scenarios, saveScenario, updateScenario, isFull } = useScenarios()
+  const { locale } = useI18n()
+  const [isOpen, setIsOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [saved, setSaved] = useState(false)
+  const [savedId, setSavedId] = useState<string | null>(null)
+  const [quotaError, setQuotaError] = useState(false)
+
+  const isEditing = !!editingScenarioId
+
+  const defaultName =
+    locale === 'es'
+      ? `Escenario ${scenarios.length + 1}`
+      : `Scenario ${scenarios.length + 1}`
+
+  const handleOpen = () => {
+    if (isEditing) {
+      // Update immediately, no need for name prompt
+      updateScenario(editingScenarioId!, { config, result })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+      return
+    }
+    setName(defaultName)
+    setIsOpen(true)
+    setSaved(false)
+    setSavedId(null)
+    setQuotaError(false)
+  }
+
+  const handleSave = () => {
+    const scenario = saveScenario(name || defaultName, config, result)
+    if (!scenario) {
+      setIsOpen(false)
+      return
+    }
+    setSavedId(scenario.id)
+    setSaved(true)
+    setIsOpen(false)
+  }
+
+  // Already saved — show success state
+  if (saved && !isEditing) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium">
+          <Check className="size-4" />
+          {locale === 'es' ? 'Escenario guardado' : 'Scenario saved'}
+        </span>
+        {savedId && (
+          <Link href="/comparar" className="text-sm text-primary underline underline-offset-2 font-medium">
+            {locale === 'es' ? 'Ver comparación →' : 'View comparison →'}
+          </Link>
+        )}
+      </div>
+    )
+  }
+
+  // Updated scenario
+  if (saved && isEditing) {
+    return (
+      <span className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium">
+        <Check className="size-4" />
+        {locale === 'es' ? 'Escenario actualizado' : 'Scenario updated'}
+      </span>
+    )
+  }
+
+  // Full — cannot add more
+  if (isFull && !isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled className="gap-1.5 opacity-50 cursor-not-allowed">
+          <BookmarkPlus className="size-4" />
+          {locale === 'es' ? 'Guardar escenario' : 'Save scenario'}
+        </Button>
+        <span className="text-xs text-muted-foreground">
+          {locale === 'es' ? `Máximo ${MAX_SCENARIOS} escenarios` : `Max ${MAX_SCENARIOS} scenarios`}
+        </span>
+        <Link href="/comparar">
+          <Button variant="ghost" size="sm" className="gap-1.5">
+            <BarChart3 className="size-4" />
+            {locale === 'es' ? 'Ver comparación' : 'View comparison'}
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
+  // Name input open
+  if (isOpen) {
+    return (
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          placeholder={defaultName}
+          className="h-8 w-44 text-sm"
+          maxLength={40}
+        />
+        <Button size="sm" onClick={handleSave} className="gap-1.5">
+          <Check className="size-4" />
+          {locale === 'es' ? 'Guardar' : 'Save'}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setIsOpen(false)}>
+          {locale === 'es' ? 'Cancelar' : 'Cancel'}
+        </Button>
+        {quotaError && (
+          <span className="text-xs text-destructive">
+            {locale === 'es' ? 'Espacio lleno — elimina un escenario.' : 'Storage full — delete a scenario.'}
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  // Default button
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleOpen}
+      className="gap-1.5"
+    >
+      <BookmarkPlus className="size-4" />
+      {isEditing
+        ? (locale === 'es' ? 'Actualizar escenario' : 'Update scenario')
+        : (locale === 'es' ? 'Guardar como escenario' : 'Save as scenario')}
+    </Button>
+  )
+}
