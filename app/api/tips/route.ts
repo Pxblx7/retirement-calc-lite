@@ -1,4 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createHash } from "crypto";
+import { unstable_cache } from "next/cache";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -36,10 +38,45 @@ function getFallbackTips(hasPPRArt151: boolean) {
   ];
 }
 
+// ─── Exact-config hash ────────────────────────────────────────────────────────
+// We hash the full request body (all numeric fields) so that:
+// - Same user, same inputs → cache hit (no Gemini call)
+// - Any input change → different hash → fresh Gemini call
+// - Different users with different inputs → their own cache entries
+// This preserves full personalization while eliminating redundant API calls.
+
+function getBodyHash(body: object): string {
+  return createHash("sha256")
+    .update(JSON.stringify(body))
+    .digest("hex")
+    .slice(0, 24);
+}
+
+// ─── Cached Gemini call ───────────────────────────────────────────────────────
+// unstable_cache memoizes per unique [tag, ...keyParts] combination.
+// revalidate: 604800 = 7 days — if inputs haven't changed, advice won't change either.
+
+function buildCachedGeminiCall(prompt: string, hash: string) {
+  return unstable_cache(
+    async () => {
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\[[\s\S]*\]/);
+      return jsonMatch ? jsonMatch[0] : text;
+    },
+    ["gemini-ai-tips", hash],
+    { revalidate: 604800, tags: [`ai-tips-${hash}`] }
+  );
+}
+
+// ─── Route handler ────────────────────────────────────────────────────────────
+
 export async function POST(req: Request) {
   let hasPPRArt151 = true;
+  let body: Record<string, unknown> = {};
+
   try {
-    const body = await req.json();
+    body = await req.json();
     const {
       currentAge,
       retirementAge,
@@ -59,7 +96,9 @@ export async function POST(req: Request) {
       pprTaxArticles = [],
     } = body;
 
-    hasPPRArt151 = pprTaxArticles.length > 0 ? pprTaxArticles.some((a: string) => a === 'art151') : true;
+    hasPPRArt151 = (pprTaxArticles as string[]).length > 0
+      ? (pprTaxArticles as string[]).some((a: string) => a === "art151")
+      : true;
 
     const prompt = `Eres un asesor financiero experto en retiro en México. El año actual es ${currentYear}.
 
@@ -68,7 +107,7 @@ Datos del usuario (Valores monetarios en pesos de ${currentYear} / VPN cuando se
 - Inflación esperada: ${inflation}%.
 - AFORE: Saldo $${aforeBalance}, Aportación mensual $${aforeMonthly}, Pensión futura (VPN): $${aforeMonthlyNPV}/mes.
 - PPR: Saldo $${pprBalance}, Aportación mensual $${pprMonthly}, Pensión futura (VPN): $${pprMonthlyNPV}/mes.
-  - Artículo fiscal del PPR: ${hasPPRArt151 ? 'Art. 151 (deducible, con devolución SAT)' : 'Art. 93 (exento a los 65+, sin devolución SAT)'}
+  - Artículo fiscal del PPR: ${hasPPRArt151 ? "Art. 151 (deducible, con devolución SAT)" : "Art. 93 (exento a los 65+, sin devolución SAT)"}
 - Ahorro Privado: Saldo $${privateBalance}, Aportación mensual $${privateMonthly}, Retiro futuro (VPN): $${privateMonthlyNPV}/mes.
 - Pensión Total en pesos de ${currentYear} (VPN): $${totalMonthlyNPV}/mes.
 
@@ -94,26 +133,26 @@ Responde ÚNICAMENTE en este formato JSON:
   ...
 ]`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // Hash the full body for an exact-match cache key
+    const hash = getBodyHash(body);
 
-    console.log("✅ Gemini text:", text.slice(0, 120));
+    console.log(`⚡ AI Tips request — cache key: ${hash}`);
 
-    // Extract JSON in case Gemini wraps it in markdown
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    const jsonString = jsonMatch ? jsonMatch[0] : text;
+    const getCachedTips = buildCachedGeminiCall(prompt, hash);
+    const jsonString = await getCachedTips();
+
+    console.log("✅ AI Tips response (from cache or Gemini):", jsonString.slice(0, 80));
 
     return new Response(jsonString, {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
 
-  } catch (error: any) {
-    console.error("❌ Gemini API Error Details:", error);
-    return new Response(JSON.stringify(getFallbackTips(hasPPRArt151)), { 
+  } catch (error: unknown) {
+    console.error("❌ AI Tips Error:", error);
+    return new Response(JSON.stringify(getFallbackTips(hasPPRArt151)), {
       status: 200,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json" },
     });
   }
 }
