@@ -8,6 +8,7 @@ import { useScenarios } from '@/hooks/use-scenarios'
 import { MAX_SCENARIOS } from '@/lib/scenario-types'
 import { ScenarioCard } from '@/components/scenarios/scenario-card'
 import { WinnerBanner } from '@/components/scenarios/winner-banner'
+import { ScenarioOverlayChart } from '@/components/scenarios/scenario-overlay-chart'
 import { useI18n } from '@/lib/i18n'
 
 // ─── Minimal header (mirrors main app) ───────────────────────────────────────
@@ -154,13 +155,7 @@ export default function CompararPage() {
               </p>
             )}
 
-            {/* Chart placeholder — replaced by Task 5 */}
-            <div
-              id="scenario-overlay-chart"
-              className="h-64 rounded-2xl border border-border/40 bg-muted/20 flex items-center justify-center text-sm text-muted-foreground"
-            >
-              {locale === 'es' ? '📈 Gráfica comparativa — próximamente' : '📈 Comparison chart — coming soon'}
-            </div>
+            <ScenarioOverlayChart scenarios={scenarios} />
           </>
         )}
       </main>
