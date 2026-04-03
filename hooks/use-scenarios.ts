@@ -38,6 +38,8 @@ function readScenarios(): Scenario[] {
 function writeScenarios(scenarios: Scenario[]): void {
   try {
     localStorage.setItem(SCENARIOS_STORAGE_KEY, JSON.stringify(scenarios))
+    // Notify all other useScenarios instances on the same page
+    window.dispatchEvent(new Event('retiro:scenarios:updated'))
   } catch (e: unknown) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
       throw new Error('QUOTA_EXCEEDED')
@@ -66,14 +68,20 @@ export function useScenarios(): UseScenariosReturn {
   // over real data before the mount read has finished.
   const hasLoadedRef = useRef(false)
 
-  // ── Load from localStorage on mount (client-only) ──────────────────────────
+  // ── Load from localStorage on mount + cross-instance sync ─────────────────
   useEffect(() => {
-    if (isLocalStorageAvailable) {
-      const loaded = readScenarios()
-      setScenarios(loaded)
-      hasLoadedRef.current = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!isLocalStorageAvailable) return
+    const loaded = readScenarios()
+    setScenarios(loaded)
+    hasLoadedRef.current = true
+
+    // When another useScenarios instance on the SAME page writes to localStorage,
+    // browsers fire 'storage' only for OTHER tabs. For same-page cross-instance
+    // sync we dispatch a custom event from the write helpers below.
+    const onSync = () => setScenarios(readScenarios())
+    window.addEventListener('retiro:scenarios:updated', onSync)
+    return () => window.removeEventListener('retiro:scenarios:updated', onSync)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
