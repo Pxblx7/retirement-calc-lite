@@ -36,6 +36,19 @@
 - 23-second rate limit cooldown on regenerating tips (client-side).
 - Fallback tips available if AI request fails.
 
+### 🔀 Scenario Comparison (Compare Mode)
+- **Save up to 3 scenarios** from any simulation run, with a custom name.
+- **Cloud Save & Sync:** If authenticated, scenarios are saved securely to a PostgreSQL database (Supabase) via Row Level Security (RLS) policies. If unauthenticated, it falls back gracefully to `localStorage`.
+- **Compare page (`/comparar`):** side-by-side card layout showing all saved scenarios with key metrics.
+- **Winner detection:** automatic "Mejor Pensión 🏆" badge highlighting the scenario with the highest NPV.
+- **Overlay chart:** multi-line wealth growth chart overlaying all scenarios for visual comparison.
+- **VPN-first highlight:** NPV (current-year pesos) shown as the primary green metric on each card, matching the Summary tab logic.
+
+### 🔐 Authentication & Security
+- **Passwordless Magic Links:** Users authenticate securely via email using Supabase Auth and Resend.
+- **Custom Branded Delivery:** Emails are delivered via a verified custom domain (`miretiromx.pxblx.com`) ensuring high deliverability (DKIM, SPF, DMARC).
+- **Security Hardening:** Natively implements Strict CSP headers, API Rate Limiting, Zod Validation, and strict type-safety compilation.
+
 ### 📄 Native PDF Export
 - Browser-native export using `window.print()` and `@media print` styles.
 - Readable, ink-friendly output with: title, generation date, input summary, results, chart, AI tips, and disclaimer footer.
@@ -48,15 +61,6 @@
 - Responsive design (mobile-first).
 - Inputs with +/− controls and perfect alignment.
 - Footer credit to Product Manager with portfolio link.
-
-### 🔀 Scenario Comparison (Compare Mode)
-- **Save up to 3 scenarios** locally from any simulation run, with a custom name.
-- **Compare page (`/comparar`):** side-by-side card layout showing all saved scenarios with key metrics.
-- **Winner detection:** automatic "Mejor Pensión 🏆" badge highlighting the scenario with the highest NPV.
-- **Overlay chart:** multi-line wealth growth chart overlaying all scenarios for visual comparison.
-- **VPN-first highlight:** NPV (current-year pesos) shown as the primary green metric on each card, matching the Summary tab logic.
-- **Consistent footer and theming** across main simulator and compare pages.
-- Scenario persistence via `localStorage` (Phase 2 will add cloud sync via Supabase).
 
 ---
 
@@ -106,6 +110,13 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 - **Save Scenario button repositioned** to appear directly below the results summary cards for higher visibility.
 - **Simulation state reset:** Save Scenario button resets automatically when a new simulation is run (prevents accidental duplicate saves).
 - **Bug fix:** replaced `crypto.randomUUID()` with a cross-environment-safe ID generator to prevent crashes on non-HTTPS local network testing.
+
+### Phase 8 — Cloud Architecture & Security Hardening
+- **Supabase Integration:** Replaced local mock storage with a real PostgreSQL database for scenarios.
+- **Magic Link Authentication:** Implemented passwordless email login using Supabase Auth.
+- **Custom Domain Email (Resend):** Integrated Resend SMTP to deliver branded auth emails via `miretiromx.pxblx.com` with full DKIM/DMARC authentication.
+- **Security Layer (M1-M4):** Enforced Content Security Policy (CSP), API-level Zod validation and IP-based rate limiting on the Gemini AI endpoints, and Row Level Security (RLS) on database tables.
+- **Production CI/CD:** Hardened `tsconfig.json` and strict build settings for zero-error deployments on Vercel.
 
 ---
 
@@ -157,6 +168,8 @@ All tests pass ✅
 |---|---|
 | Framework | Next.js 14 (App Router) |
 | Language | TypeScript |
+| Database & Auth | Supabase (PostgreSQL, Magic Links) |
+| Email Delivery | Resend (Custom SMTP) |
 | Styling | Tailwind CSS |
 | Components | shadcn/ui |
 | AI | Google Gemini (flash-lite) |

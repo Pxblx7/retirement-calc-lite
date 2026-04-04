@@ -44,10 +44,13 @@ export function SaveScenarioButton({
       ? `Escenario ${scenarios.length + 1}`
       : `Scenario ${scenarios.length + 1}`
 
-  const handleOpen = () => {
+  const [isSaving, setIsSaving] = useState(false)
+
+  const handleOpen = async () => {
     if (isEditing) {
-      // Update immediately, no need for name prompt
-      updateScenario(editingScenarioId!, { config, result })
+      setIsSaving(true)
+      await updateScenario(editingScenarioId!, { config, result })
+      setIsSaving(false)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
       return
@@ -59,8 +62,10 @@ export function SaveScenarioButton({
     setQuotaError(false)
   }
 
-  const handleSave = () => {
-    const scenario = saveScenario(name || defaultName, config, result)
+  const handleSave = async () => {
+    setIsSaving(true)
+    const scenario = await saveScenario(name || defaultName, config, result)
+    setIsSaving(false)
     if (!scenario) {
       setIsOpen(false)
       return
@@ -130,12 +135,13 @@ export function SaveScenarioButton({
           placeholder={defaultName}
           className="h-8 w-44 text-sm"
           maxLength={40}
+          disabled={isSaving}
         />
-        <Button size="sm" onClick={handleSave} className="gap-1.5">
-          <Check className="size-4" />
-          {locale === 'es' ? 'Guardar' : 'Save'}
+        <Button size="sm" onClick={handleSave} disabled={isSaving} className="gap-1.5">
+          {isSaving ? <span className="animate-spin text-lg leading-none">⟳</span> : <Check className="size-4" />}
+          {locale === 'es' ? (isSaving ? 'Guardando...' : 'Guardar') : (isSaving ? 'Saving...' : 'Save')}
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setIsOpen(false)}>
+        <Button size="sm" variant="ghost" onClick={() => setIsOpen(false)} disabled={isSaving}>
           {locale === 'es' ? 'Cancelar' : 'Cancel'}
         </Button>
         {quotaError && (
@@ -153,11 +159,12 @@ export function SaveScenarioButton({
       variant="outline"
       size="sm"
       onClick={handleOpen}
+      disabled={isSaving}
       className="gap-1.5"
     >
-      <BookmarkPlus className="size-4" />
+      {isSaving ? <span className="animate-spin text-lg leading-none">⟳</span> : <BookmarkPlus className="size-4" />}
       {isEditing
-        ? (locale === 'es' ? 'Actualizar escenario' : 'Update scenario')
+        ? (locale === 'es' ? (isSaving ? 'Actualizando...' : 'Actualizar escenario') : (isSaving ? 'Updating...' : 'Update scenario'))
         : (locale === 'es' ? 'Guardar como escenario' : 'Save as scenario')}
     </Button>
   )

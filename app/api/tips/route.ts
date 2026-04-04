@@ -1,15 +1,70 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createHash } from "crypto";
 import { unstable_cache } from "next/cache";
+import { z } from "zod";
+
+// ─── M2: Input validation schema ─────────────────────────────────────────────
+// All fields are validated for type, sign, and realistic range BEFORE being
+// interpolated into the Gemini prompt, preventing prompt injection via type
+// coercion (e.g. passing a script string as "currentAge").
+
+const TipsBodySchema = z.object({
+  currentAge:          z.number().int().min(18).max(80),
+  retirementAge:       z.number().int().min(50).max(90),
+  planningHorizonAge:  z.number().int().min(60).max(110),
+  inflation:           z.number().min(0).max(50),
+  aforeBalance:        z.number().min(0).max(100_000_000),
+  aforeMonthly:        z.number().min(0).max(500_000),
+  aforeMonthlyNPV:     z.number().min(0),
+  pprBalance:          z.number().min(0).max(100_000_000),
+  pprMonthly:          z.number().min(0).max(500_000),
+  pprMonthlyNPV:       z.number().min(0),
+  privateBalance:      z.number().min(0).max(100_000_000),
+  privateMonthly:      z.number().min(0).max(500_000),
+  privateMonthlyNPV:   z.number().min(0),
+  totalMonthlyFuture:  z.number().min(0),
+  totalMonthlyNPV:     z.number().min(0),
+  pprTaxArticles:      z.array(z.enum(["art151", "art93"])).default([]),
+});
+
+type TipsBody = z.infer<typeof TipsBodySchema>;
+
+// ─── M2: In-memory rate limiter ───────────────────────────────────────────────
+// Provides best-effort protection against quota abuse within a single warm
+// serverless instance. For production-grade limiting, configure Vercel Firewall:
+//   Dashboard → Security → Firewall → Rule: /api/tips, max 10 req/min/IP.
+
+const ipMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 10;        // requests
+const RATE_LIMIT_WINDOW = 60_000; // milliseconds
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = ipMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    ipMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return false; // first request in window — allow
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) return true; // over limit
+
+  entry.count++;
+  return false;
+}
+
+// ─── Gemini setup ─────────────────────────────────────────────────────────────
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-// Using gemini-3.1-flash-lite-preview for higher quota (500 RPD)
+// gemini-3.1-flash-lite-preview: 500 RPD free, fast and lightweight
 const model = genAI.getGenerativeModel({
   model: "gemini-3.1-flash-lite-preview",
 });
 
 const currentYear = new Date().getFullYear();
+
+// ─── Fallback tips (shown when Gemini is unavailable) ─────────────────────────
 
 function getFallbackTips(hasPPRArt151: boolean) {
   return [
@@ -39,11 +94,8 @@ function getFallbackTips(hasPPRArt151: boolean) {
 }
 
 // ─── Exact-config hash ────────────────────────────────────────────────────────
-// We hash the full request body (all numeric fields) so that:
-// - Same user, same inputs → cache hit (no Gemini call)
-// - Any input change → different hash → fresh Gemini call
-// - Different users with different inputs → their own cache entries
-// This preserves full personalization while eliminating redundant API calls.
+// Hash the validated body so identical inputs always return the same cache
+// entry (no redundant Gemini call), while any change produces a fresh call.
 
 function getBodyHash(body: object): string {
   return createHash("sha256")
@@ -53,8 +105,7 @@ function getBodyHash(body: object): string {
 }
 
 // ─── Cached Gemini call ───────────────────────────────────────────────────────
-// unstable_cache memoizes per unique [tag, ...keyParts] combination.
-// revalidate: 604800 = 7 days — if inputs haven't changed, advice won't change either.
+// revalidate: 604800 = 7 days — if inputs haven't changed, advice won't change.
 
 function buildCachedGeminiCall(prompt: string, hash: string) {
   return unstable_cache(
@@ -69,38 +120,18 @@ function buildCachedGeminiCall(prompt: string, hash: string) {
   );
 }
 
-// ─── Route handler ────────────────────────────────────────────────────────────
+// ─── Prompt builder ───────────────────────────────────────────────────────────
 
-export async function POST(req: Request) {
-  let hasPPRArt151 = true;
-  let body: Record<string, unknown> = {};
+function buildPrompt(data: TipsBody, hasPPRArt151: boolean): string {
+  const {
+    currentAge, retirementAge, planningHorizonAge, inflation,
+    aforeBalance, aforeMonthly, aforeMonthlyNPV,
+    pprBalance, pprMonthly, pprMonthlyNPV,
+    privateBalance, privateMonthly, privateMonthlyNPV,
+    totalMonthlyNPV,
+  } = data;
 
-  try {
-    body = await req.json();
-    const {
-      currentAge,
-      retirementAge,
-      planningHorizonAge,
-      inflation,
-      aforeBalance,
-      aforeMonthly,
-      aforeMonthlyNPV,
-      pprBalance,
-      pprMonthly,
-      pprMonthlyNPV,
-      privateBalance,
-      privateMonthly,
-      privateMonthlyNPV,
-      totalMonthlyFuture,
-      totalMonthlyNPV,
-      pprTaxArticles = [],
-    } = body;
-
-    hasPPRArt151 = (pprTaxArticles as string[]).length > 0
-      ? (pprTaxArticles as string[]).some((a: string) => a === "art151")
-      : true;
-
-    const prompt = `Eres un asesor financiero experto en retiro en México. El año actual es ${currentYear}.
+  return `Eres un asesor financiero experto en retiro en México. El año actual es ${currentYear}.
 
 Datos del usuario (Valores monetarios en pesos de ${currentYear} / VPN cuando se indique):
 - Edad actual: ${currentAge} años. Retiro a los ${retirementAge}. Horizonte hasta los ${planningHorizonAge}.
@@ -132,16 +163,55 @@ Responde ÚNICAMENTE en este formato JSON:
   },
   ...
 ]`;
+}
 
-    // Hash the full body for an exact-match cache key
+// ─── Route handler ────────────────────────────────────────────────────────────
+
+export async function POST(req: Request) {
+  // M2: Rate limiting — checked before any compute
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "0.0.0.0";
+  if (isRateLimited(ip)) {
+    return new Response(
+      JSON.stringify({ error: "Too many requests. Please wait a minute." }),
+      { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "60" } }
+    );
+  }
+
+  let hasPPRArt151 = true;
+
+  try {
+    const rawBody = await req.json();
+
+    // M2: Schema validation — reject malformed or out-of-range payloads
+    const parsed = TipsBodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const body = parsed.data;
+
+    hasPPRArt151 = body.pprTaxArticles.length > 0
+      ? body.pprTaxArticles.some((a) => a === "art151")
+      : true;
+
+    const prompt = buildPrompt(body, hasPPRArt151);
     const hash = getBodyHash(body);
 
-    console.log(`⚡ AI Tips request — cache key: ${hash}`);
+    // N4: Dev-only cache key logging — never printed in production
+    if (process.env.NODE_ENV === "development") {
+      console.log(`⚡ AI Tips request — cache key: ${hash}`);
+    }
 
     const getCachedTips = buildCachedGeminiCall(prompt, hash);
     const jsonString = await getCachedTips();
 
-    console.log("✅ AI Tips response (from cache or Gemini):", jsonString.slice(0, 80));
+    // N4: Dev-only response logging
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ AI Tips response (from cache or Gemini):", jsonString.slice(0, 80));
+    }
 
     return new Response(jsonString, {
       status: 200,

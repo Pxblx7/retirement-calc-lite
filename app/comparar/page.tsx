@@ -10,35 +10,15 @@ import { ScenarioCard } from '@/components/scenarios/scenario-card'
 import { WinnerBanner } from '@/components/scenarios/winner-banner'
 import { ScenarioOverlayChart } from '@/components/scenarios/scenario-overlay-chart'
 import { useI18n } from '@/lib/i18n'
+import { AuthStatus } from '@/components/auth/auth-status'
+import { ThemeToggle, LanguageToggle, MainFooter } from '@/components/layout/main-header'
 
-// ─── Minimal header (mirrors main app) ───────────────────────────────────────
-
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  const next =
-    theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light'
-  const Icon = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor
-  return (
-    <Button variant="ghost" size="sm" onClick={() => setTheme(next)}>
-      <Icon className="size-4" />
-    </Button>
-  )
-}
-
-function LanguageToggle() {
-  const { locale, setLocale } = useI18n()
-  return (
-    <Button variant="ghost" size="sm" onClick={() => setLocale(locale === 'es' ? 'en' : 'es')}>
-      <Globe className="size-4" />
-      <span className="ml-1 text-xs font-bold">{locale.toUpperCase()}</span>
-    </Button>
-  )
-}
+// Toggles imported from layout
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CompararPage() {
-  const { scenarios, deleteScenario, updateScenario, isFull } = useScenarios()
+  const { scenarios, deleteScenario, updateScenario, isFull, isLoading } = useScenarios()
   const { locale } = useI18n()
 
   // Determine winner (scenario with highest total NPV monthly)
@@ -76,6 +56,8 @@ export default function CompararPage() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <div className="hidden sm:block w-px h-6 bg-border/60 mx-1" />
+            <AuthStatus />
             <LanguageToggle />
             <ThemeToggle />
           </div>
@@ -85,8 +67,16 @@ export default function CompararPage() {
       {/* ── Main content ── */}
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-8 flex flex-col gap-6">
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center gap-6 py-24 text-center opacity-70">
+            <span className="animate-spin text-2xl leading-none">⟳</span>
+            <p className="text-sm text-muted-foreground">{locale === 'es' ? 'Cargando escenarios...' : 'Loading scenarios...'}</p>
+          </div>
+        )}
+
         {/* Empty state */}
-        {scenarios.length === 0 && (
+        {!isLoading && scenarios.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
             <div className="rounded-full bg-muted/40 p-6">
               <BarChart3 className="size-12 text-muted-foreground" />
@@ -161,24 +151,7 @@ export default function CompararPage() {
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-border/40 bg-card/30 py-8 mt-12">
-        <div className="mx-auto max-w-[1440px] px-4 flex flex-col items-center gap-2 text-center">
-          <p className="text-sm text-muted-foreground">
-            {locale === 'es' ? 'Diseñado y programado por' : 'Designed and built by'}{" "}
-            <a
-              href="https://pxblx7.github.io/pablo-arroyo-product-manager/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-primary hover:underline"
-            >
-              Pablo Arroyo — Product Manager
-            </a>
-          </p>
-          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-            © {new Date().getFullYear()} RETIRO MX. {locale === 'es' ? 'Solo con fines educativos' : 'For educational purposes only'}
-          </p>
-        </div>
-      </footer>
+      <MainFooter />
     </div>
   )
 }

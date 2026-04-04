@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, Suspense } from "react"
+import { useState, useCallback, useEffect, useRef, Suspense } from "react"
 import { useTheme } from "next-themes"
 import { useSearchParams } from "next/navigation"
 import { AssumptionsPanel } from "@/components/simulator/assumptions-panel"
@@ -14,6 +14,7 @@ import {
   type SimulationResult,
 } from "@/lib/simulation"
 import { useI18n, type Locale } from "@/lib/i18n"
+import { AuthStatus } from "@/components/auth/auth-status"
 import { aggregatePPRs, createDefaultPPR, type PPRConfig } from "@/lib/ppr-helpers"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
@@ -21,68 +22,10 @@ import { Sun, Moon, Monitor, Globe, Calculator, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { SaveScenarioButton } from "@/components/scenarios/save-scenario-button"
 import { useScenarios } from "@/hooks/use-scenarios"
-import { SCENARIOS_STORAGE_KEY } from "@/lib/scenario-types"
-import type { Scenario } from "@/lib/scenario-types"
 
-// ─── Header utils ─────────────────────────────────────────────────────────────
+import { MainHeader, MainFooter } from "@/components/layout/main-header"
 
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  const { t } = useI18n()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
-  const cycle = () => {
-    if (theme === "light") setTheme("dark")
-    else if (theme === "dark") setTheme("system")
-    else setTheme("light")
-  }
-
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" className="rounded-full" aria-label="Toggle theme" disabled>
-        <Monitor className="size-5" />
-      </Button>
-    )
-  }
-
-  const ariaKey = theme === "light" ? "theme.light" : theme === "dark" ? "theme.dark" : "theme.system"
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={cycle}
-      className="rounded-full"
-      aria-label={t(ariaKey as Parameters<typeof t>[0])}
-    >
-      {theme === "light" && <Sun className="size-5" />}
-      {theme === "dark" && <Moon className="size-5" />}
-      {(theme === "system" || !theme) && <Monitor className="size-5" />}
-    </Button>
-  )
-}
-
-
-function LanguageToggle() {
-  const { locale, setLocale } = useI18n()
-  const toggle = () => {
-    const next: Locale = locale === "en" ? "es" : "en"
-    setLocale(next)
-  }
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={toggle}
-      className="gap-1.5 uppercase font-bold text-xs"
-      aria-label="Toggle language"
-    >
-      <Globe className="size-4" />
-      {locale}
-    </Button>
-  )
-}
-
+// No toggles here anymore
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function SimulatorPageInner() {
@@ -91,31 +34,30 @@ function SimulatorPageInner() {
   const [aiTrigger, setAiTrigger] = useState(0)
   const { t, locale } = useI18n()
   const searchParams = useSearchParams()
-  const { scenarios } = useScenarios()
+  const { scenarios, isLoading } = useScenarios()
 
   // Scenario editing state
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null)
   const [editingScenarioName, setEditingScenarioName] = useState<string | null>(null)
 
   // Load scenario from URL param (?scenario=<id>)
+  // Uses the hook's scenarios array so it works for BOTH anonymous users
+  // (localStorage) and logged-in users (Supabase). The old code read
+  // localStorage directly, which is empty after cloud migration.
+  const scenarioFromUrlLoaded = useRef(false)
   useEffect(() => {
     const scenarioId = searchParams?.get('scenario')
-    if (!scenarioId) return
-    try {
-      const raw = localStorage.getItem(SCENARIOS_STORAGE_KEY)
-      if (!raw) return
-      const stored: Scenario[] = JSON.parse(raw)
-      const found = stored.find((s) => s.id === scenarioId)
-      if (!found) return
-      setConfig(found.config)
-      setResult(found.result)
-      setEditingScenarioId(found.id)
-      setEditingScenarioName(found.name)
-    } catch {
-      // ignore parse errors
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    if (!scenarioId || isLoading || scenarioFromUrlLoaded.current) return
+
+    const found = scenarios.find((s) => s.id === scenarioId)
+    if (!found) return
+
+    scenarioFromUrlLoaded.current = true
+    setConfig(found.config)
+    setResult(found.result)
+    setEditingScenarioId(found.id)
+    setEditingScenarioName(found.name)
+  }, [searchParams, scenarios, isLoading])
 
   // F1 – Multiple PPR accounts
   const [pprList, setPPRList] = useState<PPRConfig[]>([createDefaultPPR(0)])
@@ -129,10 +71,10 @@ function SimulatorPageInner() {
   >({})
 
   // ─── Real-time validation ─────────────────────────────────────────────────
-  
+
   const validateAgesRealtime = useCallback(() => {
     const errors: typeof formErrors = {}
-    
+
     // Invalid age values (edge cases)
     if (config.currentAge < 1 || config.currentAge > 120) {
       errors.currentAge = t("error.invalidAge")
@@ -143,7 +85,7 @@ function SimulatorPageInner() {
     if (config.planningHorizonAge < 1 || config.planningHorizonAge > 110) {
       errors.planningHorizonAge = t("error.invalidAge")
     }
-    
+
     // Relationship errors (only if values are valid)
     if (config.currentAge >= 1 && config.retirementAge >= 1 && config.currentAge >= config.retirementAge) {
       errors.currentAge = t("error.currentAgeMustBeLess")
@@ -156,7 +98,7 @@ function SimulatorPageInner() {
     if (config.planningHorizonAge > 110) {
       errors.planningHorizonAge = t("error.planningHorizonTooLarge")
     }
-    
+
     setFormErrors(errors)
     return errors
   }, [config, t])
@@ -223,39 +165,7 @@ function SimulatorPageInner() {
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto max-w-[1440px] px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 rounded-lg">
-              <Calculator className="size-5 text-primary-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-sm font-black tracking-tight uppercase">
-                {t("header.title")}
-              </h1>
-              <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                {t("header.subtitle")}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            {scenarios.length > 0 && (
-              <Link href="/comparar">
-                <Button variant="ghost" size="sm" className="gap-1.5">
-                  <BarChart3 className="size-4" />
-                  <span className="hidden sm:inline">
-                    {locale === 'es' ? 'Comparar' : 'Compare'}
-                  </span>
-                  <span className="text-xs font-bold">({scenarios.length})</span>
-                </Button>
-              </Link>
-            )}
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <MainHeader />
 
       {/* Main Content */}
       <main className="mx-auto max-w-[1440px] px-4 py-8 flex-grow w-full">
@@ -295,9 +205,9 @@ function SimulatorPageInner() {
                       </span>
                     </div>
                   )}
-                  <ResultsPanel 
-                    config={config} 
-                    result={result} 
+                  <ResultsPanel
+                    config={config}
+                    result={result}
                     pprList={pprList}
                     actionButton={
                       <SaveScenarioButton
@@ -341,24 +251,7 @@ function SimulatorPageInner() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/40 bg-card/30 py-8 mt-12">
-        <div className="mx-auto max-w-[1440px] px-4 flex flex-col items-center gap-2 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("footer.builtBy")}{" "}
-            <a
-              href="https://pxblx7.github.io/pablo-arroyo-product-manager/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold text-primary hover:underline"
-            >
-              Pablo Arroyo — Product Manager
-            </a>
-          </p>
-          <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest">
-            © {new Date().getFullYear()} RETIRO MX. {t("footer.onlyEducational")}
-          </p>
-        </div>
-      </footer>
+      <MainFooter />
     </div>
   )
 }

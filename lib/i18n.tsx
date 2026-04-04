@@ -135,6 +135,11 @@ const translations = {
     "theme.light": "Switch to dark mode",
     "theme.dark": "Switch to system theme",
     "theme.system": "Switch to light mode",
+
+    // Navbar & Auth
+    "nav.compareScenarios": "Compare scenarios",
+    "auth.login": "Log in",
+    "auth.logout": "Sign out",
   },
   es: {
     "header.title": "RETIRO MX",
@@ -255,6 +260,11 @@ const translations = {
     "theme.light": "Cambiar a modo oscuro",
     "theme.dark": "Usar tema del sistema",
     "theme.system": "Cambiar a modo claro",
+
+    // Navbar & Auth
+    "nav.compareScenarios": "Comparar escenarios",
+    "auth.login": "Iniciar Sesión",
+    "auth.logout": "Cerrar Sesión",
   },
 } as const
 

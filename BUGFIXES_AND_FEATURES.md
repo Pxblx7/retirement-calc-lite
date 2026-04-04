@@ -102,3 +102,24 @@ Includes:
 - NPV (Net Present Value) calculations
 - Bilingual support (Spanish/English)
 - PDF export via browser print
+
+---
+
+## Phase 8: Cloud Architecture, Security, & Fixes
+
+### Bug Fixes (Phase 8)
+- **Bug 9:** "Cargar en simulador" failed/duplicated scenarios for authenticated users.
+  - **Solution:** `app/page.tsx` was bypass-reading from `localStorage` directly (which was empty for authenticated users since their data synced to Supabase). Replaced direct localStorage reads with the Supabase-aware `useScenarios` hook. Added deduplication guards to ensure `simResult` isn't repeatedly pushed.
+- **Bug 10:** Production deployment failed with `Type error: Cannot find module` on obsolete test imports.
+  - **Solution:** Adjusted `tsconfig.json` to properly exclude generated testing directories (`local_tests`, `lib/export.ts`) ensuring `npx tsc` completes with 0 errors.
+
+### Security Hardening (M1-M4)
+- **M1 (HTTP Headers):** Configured strict `next.config.mjs` injecting CSP, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and `Permissions-Policy` across all routes.
+- **M2 (API Hardening):** Implemented severe rate-limiting in `/api/tips` tracking IPs via memory to prevent Gemini quota exhaustion. Blocked prompt injection vectors with strict Zod parsing schema enforcing numbers and boundaries for all payload fields.
+- **M3 (Build Types):** Removed `typescript.ignoreBuildErrors = true` from Next configs, resolving all underlying type mismatches to pass strict mode.
+- **M4 (Database Security):** Row Level Security (RLS) fully enacted on `user_scenarios` table. Enforced session lifecycles with OTP expiries set to 1 hour and revoked refresh tokens dynamically.
+
+### Features
+- **Supabase Cloud Saves:** Authenticated users now transparently automatically save and load their comparison scenarios using a live PostgreSQL database instead of volatile `localStorage`.
+- **Magic Link Auth:** Users login safely via passwordless magic links (`/login` -> email verification callback).
+- **Custom Domain Sender:** App is served and sends transactional email verification via `miretiromx.pxblx.com`, authenticated on DNS with Resend + Porkbun for DMARC pass rates.

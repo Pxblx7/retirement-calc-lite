@@ -38,30 +38,31 @@ export function PortfolioTips() {
     },
   ]
 
-  return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-bold flex items-center gap-2">
-        {t("section.portfolio")}
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {tips.map((tip, index) => (
-          <Card key={index} className="border-none shadow-sm bg-card/50">
-            <CardHeader className="pb-2 flex flex-row items-center gap-3">
-              <div className="bg-background p-2 rounded-lg shadow-sm">
-                {tip.icon}
-              </div>
-              <CardTitle className="text-sm font-bold">{tip.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {tip.body}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+return (
+  <div className="flex flex-col gap-4">
+    <h2 className="text-lg font-bold flex items-center gap-2">
+      {t("section.portfolio")}
+    </h2>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {tips.map((tip, index) => (
+        <Card key={index} className="border-none shadow-sm bg-card/50">
+          <CardHeader className="pb-2 flex flex-row items-center gap-3">
+            <div className="bg-background p-2 rounded-lg shadow-sm">
+              {tip.icon}
+            </div>
+            <CardTitle className="text-sm font-bold">{tip.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {tip.body}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
-  )
+  </div>
+)
 }
 
 export function PPRFundGuide() {

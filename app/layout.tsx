@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { I18nProvider } from '@/lib/i18n'
+import { ScenariosProvider } from '@/hooks/use-scenarios'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -46,7 +47,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <I18nProvider>
-            {children}
+            <ScenariosProvider>
+              {children}
+            </ScenariosProvider>
           </I18nProvider>
         </ThemeProvider>
         <Analytics />

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 import {
   Scenario,
   ScenarioColor,
@@ -23,7 +25,7 @@ function isStorageAvailable(): boolean {
   }
 }
 
-function readScenarios(): Scenario[] {
+function readLocalScenarios(): Scenario[] {
   try {
     const raw = localStorage.getItem(SCENARIOS_STORAGE_KEY)
     if (!raw) return []
@@ -35,10 +37,9 @@ function readScenarios(): Scenario[] {
   }
 }
 
-function writeScenarios(scenarios: Scenario[]): void {
+function writeLocalScenarios(scenarios: Scenario[]): void {
   try {
     localStorage.setItem(SCENARIOS_STORAGE_KEY, JSON.stringify(scenarios))
-    // Notify all other useScenarios instances on the same page
     window.dispatchEvent(new Event('retiro:scenarios:updated'))
   } catch (e: unknown) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
@@ -48,97 +49,234 @@ function writeScenarios(scenarios: Scenario[]): void {
   }
 }
 
+function clearLocalScenarios(): void {
+  try {
+    localStorage.removeItem(SCENARIOS_STORAGE_KEY)
+    window.dispatchEvent(new Event('retiro:scenarios:updated'))
+  } catch {}
+}
+
+const mapSupabaseToScenario = (dbRow: any, index: number): Scenario => ({
+  id: dbRow.id,
+  name: dbRow.name,
+  config: dbRow.config,
+  result: dbRow.result,
+  createdAt: new Date(dbRow.created_at).getTime(),
+  color: SCENARIO_COLORS[index] || SCENARIO_COLORS[0],
+})
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export interface UseScenariosReturn {
   scenarios: Scenario[]
   isLocalStorageAvailable: boolean
-  saveScenario: (name: string, config: SimConfig, result: SimulationResult | null) => Scenario | null
-  updateScenario: (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => void
-  deleteScenario: (id: string) => void
+  saveScenario: (name: string, config: SimConfig, result: SimulationResult | null) => Promise<Scenario | null>
+  updateScenario: (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => Promise<void>
+  deleteScenario: (id: string) => Promise<void>
   isFull: boolean
+  isLoading: boolean
+  user: User | null
 }
 
-export function useScenarios(): UseScenariosReturn {
+import React, { createContext, useContext } from 'react'
+
+const ScenariosContext = createContext<UseScenariosReturn | null>(null)
+
+export function ScenariosProvider({ children }: { children: React.ReactNode }) {
   const [scenarios, setScenarios] = useState<Scenario[]>([])
   const [isLocalStorageAvailable] = useState<boolean>(() => isStorageAvailable())
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  const supabase = createClient()
+  // Prevents concurrent loadScenarios executions — set synchronously
+  // BEFORE the first await so parallel calls are blocked at entry, not
+  // mid-flight (which was the root cause of the 3× migration bug).
+  const isLoadingRef = useRef(false)
 
-  // Track whether the initial load from localStorage has completed.
-  // This prevents the mutation functions from writing an empty array
-  // over real data before the mount read has finished.
-  const hasLoadedRef = useRef(false)
+  // Fetch scenarios from Supabase depending on auth state
+  const loadScenarios = useCallback(async (currentUser: User | null) => {
+    // Synchronous guard — must be set BEFORE any await so that parallel
+    // calls (e.g. getSession + onAuthStateChange firing together) are
+    // blocked at entry rather than racing through the migration logic.
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
 
-  // ── Load from localStorage on mount + cross-instance sync ─────────────────
+    try {
+      setIsLoading(true)
+      if (currentUser) {
+        // Cloud Scenarios
+        const { data, error } = await supabase
+          .from('scenarios')
+          .select('*')
+          .order('created_at', { ascending: true })
+
+        if (!error && data) {
+          const cloudScenarios = data.map(mapSupabaseToScenario)
+
+          if (cloudScenarios.length === 0) {
+            // Auto-migration: cloud is empty → promote localStorage scenarios
+            const local = readLocalScenarios()
+            if (local.length > 0) {
+              const insertData = local.map(s => ({
+                user_id: currentUser.id,
+                name: s.name,
+                config: s.config,
+                result: s.result,
+              }))
+              const { data: migratedData, error: migrationError } = await supabase
+                .from('scenarios')
+                .insert(insertData)
+                .select()
+
+              if (!migrationError && migratedData) {
+                setScenarios(migratedData.map(mapSupabaseToScenario))
+                clearLocalScenarios()
+              }
+            } else {
+              setScenarios([])
+            }
+          } else {
+            setScenarios(cloudScenarios)
+          }
+        }
+      } else {
+        // Local Scenarios
+        setScenarios(readLocalScenarios())
+      }
+    } finally {
+      isLoadingRef.current = false
+      setIsLoading(false)
+    }
+  }, [supabase])
+
+  // Initial Auth Mount & Sync
+  // NOTE: onAuthStateChange fires INITIAL_SESSION immediately on mount with
+  // the current session, so a separate getSession() call is redundant.
+  // Having both was one of the triggers for the 3× migration race condition.
   useEffect(() => {
-    if (!isLocalStorageAvailable) return
-    const loaded = readScenarios()
-    setScenarios(loaded)
-    hasLoadedRef.current = true
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      loadScenarios(currentUser)
+    })
 
-    // When another useScenarios instance on the SAME page writes to localStorage,
-    // browsers fire 'storage' only for OTHER tabs. For same-page cross-instance
-    // sync we dispatch a custom event from the write helpers below.
-    const onSync = () => setScenarios(readScenarios())
+    return () => subscription.unsubscribe()
+  }, [loadScenarios, supabase])
+
+  // Cross-tab sync for unauthenticated local storage users
+  useEffect(() => {
+    if (!isLocalStorageAvailable || user) return
+    const onSync = () => setScenarios(readLocalScenarios())
     window.addEventListener('retiro:scenarios:updated', onSync)
     return () => window.removeEventListener('retiro:scenarios:updated', onSync)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isLocalStorageAvailable, user])
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
-  // Each mutation writes directly to localStorage (no reactive write effect).
-  // This avoids the race condition where a write effect fires with stale [] state.
 
   const saveScenario = useCallback(
-    (name: string, config: SimConfig, result: SimulationResult | null): Scenario | null => {
+    async (name: string, config: SimConfig, result: SimulationResult | null): Promise<Scenario | null> => {
       if (scenarios.length >= MAX_SCENARIOS) return null
 
       const slotIndex = scenarios.length
-      const color: ScenarioColor = SCENARIO_COLORS[slotIndex]
+      const finalName = name.trim() || `Escenario ${slotIndex + 1}`
 
-      const newScenario: Scenario = {
-        id: Math.random().toString(36).slice(2) + Date.now().toString(36),
-        name: name.trim() || `Escenario ${slotIndex + 1}`,
-        config,
-        result,
-        createdAt: Date.now(),
-        color,
+      if (user) {
+        const { data, error } = await supabase
+          .from('scenarios')
+          .insert({
+            user_id: user.id,
+            name: finalName,
+            config,
+            result,
+          })
+          .select()
+          .single()
+
+        if (error) {
+          console.error('Error saving to Supabase:', error)
+          return null
+        }
+        
+        const newCloudScenario = mapSupabaseToScenario(data, slotIndex)
+        setScenarios(prev => [...prev, newCloudScenario])
+        return newCloudScenario
+      } else {
+        const newScenario: Scenario = {
+          id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+          name: finalName,
+          config,
+          result,
+          createdAt: Date.now(),
+          color: SCENARIO_COLORS[slotIndex],
+        }
+        const updated = [...scenarios, newScenario]
+        if (isLocalStorageAvailable) writeLocalScenarios(updated)
+        setScenarios(updated)
+        return newScenario
       }
-
-      const updated = [...scenarios, newScenario]
-      if (isLocalStorageAvailable) writeScenarios(updated)
-      setScenarios(updated)
-
-      return newScenario
     },
-    [scenarios, isLocalStorageAvailable]
+    [scenarios, isLocalStorageAvailable, user, supabase]
   )
 
   const updateScenario = useCallback(
-    (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => {
-      const updated = scenarios.map((s) => (s.id === id ? { ...s, ...partial } : s))
-      if (isLocalStorageAvailable) writeScenarios(updated)
-      setScenarios(updated)
+    async (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => {
+      if (user) {
+        const { error } = await supabase
+          .from('scenarios')
+          .update(partial)
+          .eq('id', id)
+          
+        if (!error) {
+          setScenarios(prev => prev.map(s => s.id === id ? { ...s, ...partial } : s))
+        }
+      } else {
+        const updated = scenarios.map((s) => (s.id === id ? { ...s, ...partial } : s))
+        if (isLocalStorageAvailable) writeLocalScenarios(updated)
+        setScenarios(updated)
+      }
     },
-    [scenarios, isLocalStorageAvailable]
+    [scenarios, isLocalStorageAvailable, user, supabase]
   )
 
   const deleteScenario = useCallback(
-    (id: string) => {
-      const filtered = scenarios.filter((s) => s.id !== id)
-      // Re-assign colors to remaining slots after deletion
-      const recolored = filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
-      if (isLocalStorageAvailable) writeScenarios(recolored)
-      setScenarios(recolored)
+    async (id: string) => {
+      if (user) {
+        const { error } = await supabase.from('scenarios').delete().eq('id', id)
+        if (!error) {
+          setScenarios(prev => {
+            const filtered = prev.filter(s => s.id !== id)
+            return filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
+          })
+        }
+      } else {
+        const filtered = scenarios.filter((s) => s.id !== id)
+        const recolored = filtered.map((s, i) => ({ ...s, color: SCENARIO_COLORS[i] }))
+        if (isLocalStorageAvailable) writeLocalScenarios(recolored)
+        setScenarios(recolored)
+      }
     },
-    [scenarios, isLocalStorageAvailable]
+    [scenarios, isLocalStorageAvailable, user, supabase]
   )
 
-  return {
+  const value = {
     scenarios,
     isLocalStorageAvailable,
     saveScenario,
     updateScenario,
     deleteScenario,
     isFull: scenarios.length >= MAX_SCENARIOS,
+    isLoading,
+    user,
   }
+
+  return React.createElement(ScenariosContext.Provider, { value }, children)
+}
+
+export function useScenarios() {
+  const context = useContext(ScenariosContext)
+  if (!context) {
+    throw new Error('useScenarios must be used within a ScenariosProvider')
+  }
+  return context
 }
