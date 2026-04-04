@@ -10,7 +10,7 @@ import {
   SCENARIOS_STORAGE_KEY,
   MAX_SCENARIOS,
 } from '@/lib/scenario-types'
-import { SimConfig, SimulationResult } from '@/lib/simulation'
+import { SimConfig, SimulationResult, getDefaultConfig } from '@/lib/simulation'
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
 
@@ -25,13 +25,36 @@ function isStorageAvailable(): boolean {
   }
 }
 
+function sanitizeConfig(config: any): SimConfig {
+  const defaultCfg = getDefaultConfig()
+  if (!config || typeof config !== 'object') return defaultCfg
+  return {
+    ...defaultCfg,
+    ...config,
+    afore: { ...defaultCfg.afore, ...(config.afore || {}) },
+    ppr: { ...defaultCfg.ppr, ...(config.ppr || {}) },
+    private: { ...defaultCfg.private, ...(config.private || {}) },
+  }
+}
+
+function sanitizeResult(result: any): SimulationResult | null {
+  if (!result || typeof result !== 'object') return null
+  if (!result.total || typeof result.total.vpnMonthly !== 'number') return null
+  if (!result.afore || !result.ppr || !result.private) return null
+  return result as SimulationResult
+}
+
 function readLocalScenarios(): Scenario[] {
   try {
     const raw = localStorage.getItem(SCENARIOS_STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed as Scenario[]
+    return parsed.map((s: any) => ({
+      ...s,
+      config: sanitizeConfig(s.config),
+      result: sanitizeResult(s.result),
+    })) as Scenario[]
   } catch {
     return []
   }
@@ -59,9 +82,9 @@ function clearLocalScenarios(): void {
 const mapSupabaseToScenario = (dbRow: any, index: number): Scenario => ({
   id: dbRow.id,
   name: dbRow.name,
-  config: dbRow.config,
-  result: dbRow.result,
-  createdAt: new Date(dbRow.created_at).getTime(),
+  config: sanitizeConfig(dbRow.config),
+  result: sanitizeResult(dbRow.result),
+  createdAt: new Date(dbRow.created_at || Date.now()).getTime(),
   color: SCENARIO_COLORS[index] || SCENARIO_COLORS[0],
 })
 
