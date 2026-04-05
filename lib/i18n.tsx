@@ -9,7 +9,7 @@ const currentYear = new Date().getFullYear()
 const translations = {
   en: {
     // Header
-    "header.title": "RETIRO MX",
+    "header.title": "MI RETIRO MX",
     "header.subtitle": "SINGLE-PERSON RETIREMENT SIMULATOR FOR MEXICO",
 
     // Sections
@@ -71,9 +71,26 @@ const translations = {
     "empty.title": "How much will you have when you retire?",
     "empty.subtitle": "Set up your data and press \"Simulate my retirement\" to find out.",
 
+    // FAQ
+    "faq.title": "Frequently Asked Questions",
+    "faq.q1": "What is a Personal Retirement Plan (PPR)?",
+    "faq.a1": "A PPR is a long-term investment account designed for your retirement. In Mexico, contributions can be tax-deductible (Article 151) or have tax-exempt benefits upon retirement (Article 93).",
+    "faq.q2": "What is the retirement age in Mexico?",
+    "faq.a2": "In Mexico, the standard retirement age to access AFORE funds or PPR tax exemptions is 65 years. However, you can request an early retirement (cesantía) starting at age 60 under certain conditions.",
+    "faq.q3": "Is my AFORE enough to retire?",
+    "faq.a3": "It depends on your contributions and salary. Historically, the replacement rate (percentage of your last salary received as a pension) from AFORE is low (around 30-40%). This is why it is highly recommended to supplement it with a PPR or private savings.",
+    "faq.q4": "How to deduct taxes with my PPR?",
+    "faq.a4": "If you open a PPR under Article 151 of the Income Tax Law (ISR), you can deduct your contributions up to 10% of your annual income or 5 annualized UMAs (whichever is lower). This can generate a favorable balance in your annual tax return.",
+    "faq.q5": "Can I withdraw money from my PPR before age 65?",
+    "faq.a5": "Yes, but if your PPR is under Article 151 and you withdraw before age 65 or for a purpose other than retirement, a 20% ISR will be withheld on the withdrawn amount. With Article 93, you avoid SAT penalties but the financial institution might still charge early withdrawal fees and gains will be subject to ordinary tax.",
+
     // Footer
     "footer.builtBy": "Designed and built by",
     "footer.onlyEducational": "For educational purposes only.",
+    "footer.fintualCTA": "Start creating your PPR with Fintual",
+    "footer.kofiCTA": "Buy me a coffee ☕",
+    "footer.kofiSub": "Help us keep the servers running.",
+    "footer.supportCreator": "(Supports the creator)",
 
     // Validation errors (F4)
     "error.retirementBeforeCurrent": "Retirement age must be greater than current age.",
@@ -142,7 +159,7 @@ const translations = {
     "auth.logout": "Sign out",
   },
   es: {
-    "header.title": "RETIRO MX",
+    "header.title": "MI RETIRO MX",
     "header.subtitle": "SIMULADOR DE RETIRO PERSONAL PARA MÉXICO",
 
     "section.config": "⚙️ Configuración General",
@@ -197,8 +214,24 @@ const translations = {
     "empty.title": "¿Cuánto tendrás al retirarte?",
     "empty.subtitle": "Configura tus datos y presiona \"Simular mi retiro\" para descubrirlo.",
 
+    "faq.title": "Preguntas Frecuentes sobre el Retiro en México",
+    "faq.q1": "¿Qué es un Plan Personal de Retiro (PPR)?",
+    "faq.a1": "Un PPR (Plan Personal de Retiro) es una cuenta de inversión a largo plazo diseñada para tu jubilación. En México, las aportaciones pueden ser deducibles de impuestos (Artículo 151) o tener beneficios de exención en el retiro (Artículo 93).",
+    "faq.q2": "¿Cuál es la edad de retiro en México?",
+    "faq.a2": "En México, la edad estándar de retiro para acceder a los fondos de la AFORE o exenciones fiscales en un PPR es a los 65 años. Sin embargo, puedes solicitar un retiro anticipado o cesantía a partir de los 60 años bajo ciertas condiciones.",
+    "faq.q3": "¿Es suficiente mi AFORE para jubilarme?",
+    "faq.a3": "Depende de tus aportaciones y salario. Históricamente, la tasa de reemplazo (porcentaje de tu último sueldo que recibirás como pensión) de la AFORE es baja (alrededor del 30-40%). Por eso es altamente recomendable complementar con un PPR o ahorro privado.",
+    "faq.q4": "¿Cómo deducir impuestos con mi PPR?",
+    "faq.a4": "Si contratas un PPR bajo el Artículo 151 de la Ley del ISR, puedes deducir tus aportaciones hasta el 10% de tus ingresos anuales o 5 UMA anualizadas (lo que resulte menor). Esto puede generar un saldo a favor en tu declaración anual del SAT.",
+    "faq.q5": "¿Puedo retirar dinero de mi PPR antes de los 65 años?",
+    "faq.a5": "Sí, pero si tu PPR es bajo el Artículo 151 y retiras antes de los 65 o para un fin distinto al retiro, te retendrán un 20% de ISR sobre el monto retirado. Con el Artículo 93, podrías no tener multas directas del SAT, pero pagarías impuestos ordinarios sobre los rendimientos.",
+
     "footer.builtBy": "Diseñado y desarrollado por",
     "footer.onlyEducational": "Solo para fines educativos.",
+    "footer.fintualCTA": "Comienza a crear tu PPR con Fintual",
+    "footer.kofiCTA": "Invítame un café ☕",
+    "footer.kofiSub": "Ayúdanos a mantener los servidores activos.",
+    "footer.supportCreator": "(Apoya al creador)",
 
     // Validation errors (F4)
     "error.retirementBeforeCurrent": "La edad de retiro debe ser mayor que la edad actual.",

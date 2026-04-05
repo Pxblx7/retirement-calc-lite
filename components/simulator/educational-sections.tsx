@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useI18n } from "@/lib/i18n"
 import { ShieldCheck, Clock, Receipt, Coffee, ExternalLink } from "lucide-react"
+import Link from "next/link"
 
 export function PortfolioTips() {
   const { t, locale } = useI18n()
@@ -11,22 +12,22 @@ export function PortfolioTips() {
     {
       title: locale === "es" ? "Diversificación" : "Diversification",
       body: locale === "es"
-        ? "No pongas todos tus huevos en una sola canasta. Combina AFORE, PPR y ahorro privado."
-        : "Don't put all your eggs in one basket. Combine AFORE, PPR, and private savings.",
+        ? <>No pongas todos tus huevos en una sola canasta. Combina <Link href="/glosario/afore" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">AFORE</Link>, <Link href="/glosario/ppr" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">PPR</Link> y ahorro privado.</>
+        : <>Don't put all your eggs in one basket. Combine <Link href="/glosario/afore" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">AFORE</Link>, <Link href="/glosario/ppr" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">PPR</Link>, and private savings.</>,
       icon: <ShieldCheck className="size-5 text-blue-500" />,
     },
     {
       title: locale === "es" ? "Interés Compuesto" : "Compound Interest",
       body: locale === "es"
-        ? "El tiempo es tu mejor aliado. Entre más joven empieces, más crecerá tu dinero exponencialmente."
-        : "Time is your best ally. The younger you start, the more your money will grow exponentially.",
+        ? <>El tiempo es tu mejor aliado. Entre más joven empieces, tu dinero crecerá más rápido gracias al <Link href="/glosario/interes-compuesto" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">Interés Compuesto</Link>.</>
+        : <>Time is your best ally. The younger you start, your money will grow faster thanks to <Link href="/glosario/interes-compuesto" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">Compound Interest</Link>.</>,
       icon: <Clock className="size-5 text-green-500" />,
     },
     {
       title: locale === "es" ? "Beneficios Fiscales" : "Tax Benefits",
       body: locale === "es"
-        ? "Aprovecha las deducciones del PPR. El SAT puede devolverte dinero cada año por ahorrar para tu retiro."
-        : "Take advantage of PPR deductions. The SAT can refund you money every year for saving for retirement.",
+        ? <>Aprovecha el <Link href="/glosario/articulo-151" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">Artículo 151</Link> del PPR. El SAT puede devolverte dinero cada año por ahorrar.</>
+        : <>Take advantage of <Link href="/glosario/articulo-151" className="underline decoration-primary/50 underline-offset-2 hover:text-primary font-medium">Article 151</Link> for PPRs. The SAT can refund you money every year for saving.</>,
       icon: <Receipt className="size-5 text-purple-500" />,
     },
     {
@@ -98,7 +99,7 @@ export function PPRFundGuide() {
             <ExternalLink className="size-3.5" /> Rankia MX — {t("tips.fundRankia")}
           </a>
           <a
-            href="https://fintual.mx"
+            href="https://fintual.mx/r/pabloa7q"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-primary hover:underline"

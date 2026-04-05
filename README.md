@@ -1,7 +1,7 @@
-# 🏦 Retiro MX
-### Personal Retirement Simulator for Mexico
+# 🏦 Mi Retiro MX
+### Simulador de Retiro Personal para México | Personal Retirement Simulator
 
-> Project your future pension considering AFORE, PPR, and Private Savings. Includes personalized AI-driven, bilingual recommendations powered by Google Gemini and clear legal-logic modeling for Mexican pensions (Ley 97).
+> Project your future pension considering AFORE, PPR, and Private Savings. Includes a bilingual Blog & Financial Glossary for SEO, personalized AI-driven recommendations powered by Google Gemini, and clear legal-logic modeling for Mexican pensions (Ley 97). Founded in 2026 by Pablo Arroyo.
 
 ---
 
@@ -118,13 +118,45 @@ Built the financial core: 3-instrument simulator, compound interest projections,
 - **Security Layer (M1-M4):** Enforced Content Security Policy (CSP), API-level Zod validation and IP-based rate limiting on the Gemini AI endpoints, and Row Level Security (RLS) on database tables.
 - **Production CI/CD:** Hardened `tsconfig.json` and strict build settings for zero-error deployments on Vercel.
 
+### Phase 9 — Content Marketing Hub, SEO/AEO & Versioning
+- **Bilingual Blog Engine:** 3 strategic articles (ES/EN) covering top, mid, and bottom-of-funnel. Authored by Pablo Arroyo with bibliography for E-E-A-T trust signals. Statically generated for zero-latency loads.
+- **Financial Glossary (`/glosario`):** 10+ key terms (AFORE, PPR, VPN, Interés Compuesto, etc.) with individual pages and `DefinedTerm` JSON-LD structured data.
+- **SEO Comparison Pages (`/comparativas`):** Static pages comparing products (e.g., AFORE vs PPR) with `FAQPage` schema for AEO (Answer Engine Optimization).
+- **Global Schema Markup:** `WebSite`, `Organization`, and `SoftwareApplication` JSON-LD injected globally. `BlogPosting` schema added per article.
+- **Application Versioning Widget:** `ReleaseModal` component auto-shows new features on first visit after a version bump, driven by `lib/releases.ts`.
+- **Vercel Web Analytics:** `@vercel/analytics` integrated into `app/layout.tsx` for production traffic tracking.
+- **Unit Testing with Vitest:** 5 passing unit tests covering the simulation engine and Goal Tracker math.
+
 ---
 
-## 🧪 Testing (Playwright)
+## 🧪 Testing
 
-End-to-end browser tests are written with **[Playwright](https://playwright.dev/)** — no framework dependency, plain Node.js scripts.
+### Unit Tests (Vitest)
 
-### What's tested
+Pure-function unit tests covering the financial simulation engine and Goal Tracker math.
+
+```bash
+npm run test:unit
+```
+
+| Test file | Coverage |
+|---|---|
+| `local_tests/lib/simulation.test.ts` | Annual increment NPV impact, Tax Article 151 vs 93 logic, mixed tax article simulation |
+| `local_tests/lib/goal-tracker.test.ts` | AFORE increment effect on required PPR, multi-PPR proportional distribution |
+
+**5/5 tests passing ✅**
+
+### End-to-End Tests (Playwright)
+
+Browser automation tests covering full user flows.
+
+```bash
+# Install Playwright (first time only)
+npx playwright install chromium
+
+# Run isolated Playwright suite
+npx playwright test --config=local_tests/playwright.config.ts
+```
 
 | Test | Feature |
 |------|---------|
@@ -139,42 +171,23 @@ End-to-end browser tests are written with **[Playwright](https://playwright.dev/
 | `test-09-goal-tracker-warning.js` | Target-too-low warning message |
 | `test-10-independent-toggles.js` | Language & theme toggles are independent |
 
-### Running tests
-
-You can run the existing manual Node tests:
-
-```bash
-# Install Playwright (first time only)
-npx playwright install chromium
-
-# Run all tests against the local dev server
-npm run dev &
-node tests/test-01-page-load.js
-# … or run any individual test file
-```
-
-Or you can run the new isolated Playwright framework suite from `local_tests`:
-```bash
-npx playwright test --config=local_tests/playwright.config.ts
-```
-
-All tests pass ✅
-
 ---
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5.7 |
 | Database & Auth | Supabase (PostgreSQL, Magic Links) |
 | Email Delivery | Resend (Custom SMTP) |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS v4 |
 | Components | shadcn/ui |
 | AI | Google Gemini (flash-lite) |
 | AI SDK | @google/generative-ai 0.24.1 |
+| Unit Testing | Vitest |
 | E2E Testing | Playwright |
+| Analytics | Vercel Web Analytics |
 | Deployment | Vercel |
 
 ---
