@@ -8,6 +8,7 @@ import { useI18n, type Locale } from '@/lib/i18n'
 import { useTheme } from 'next-themes'
 import { AuthStatus } from '@/components/auth/auth-status'
 import { useScenarios } from '@/hooks/use-scenarios'
+import { releases } from '@/lib/releases'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
@@ -192,7 +193,7 @@ export function MainFooter() {
         <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest flex items-center justify-center gap-2">
           <span>© {new Date().getFullYear()} MI RETIRO MX. {t('footer.onlyEducational')}</span>
           <span className="w-1 h-1 rounded-full bg-border/60" />
-          <span className="font-mono bg-muted/50 px-1.5 py-0.5 rounded text-muted-foreground">v1.0.0</span>
+          <span className="font-mono bg-muted/50 px-1.5 py-0.5 rounded text-muted-foreground">v{releases[0].version}</span>
         </p>
       </div>
     </footer>
