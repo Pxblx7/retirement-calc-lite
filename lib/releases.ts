@@ -17,7 +17,7 @@ export const releases: Release[] = [
       "Modal de Novedades: al actualizar la app verás automáticamente las últimas mejoras.",
     ],
   },
-  { Already done — and perfectly too.Looking at layout.tsx(line 3 and 74), the @vercel / analytics package is already installed and wired up:
+  {
   version: "1.0.0",
   date: "Abril 2026",
   title: "Primer Lanzamiento Oficial 🎉",
