@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { seoComparisons } from "@/lib/seo-comparisons"
 import { SimulatorCore } from "@/components/simulator/simulator-core"
 import { notFound } from "next/navigation"
@@ -35,6 +36,9 @@ export default async function ComparativaPage({ params }: { params: Promise<{ sl
   }
 
   return (
-    <SimulatorCore seoTemplate={comp} />
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <SimulatorCore seoTemplate={comp} />
+    </Suspense>
   )
 }
+
