@@ -214,4 +214,4 @@ npm run dev
 ## 📝 Credits & Portfolio
 Developed by **Pablo Arroyo** — Product Manager.  
 📧 pab.arroyo@outlook.com  
-🔗 [Portfolio](https://pxblx7.github.io/pablo-arroyo-product-manager/)
+🔗 [Portfolio](https://www.pxblx.com)

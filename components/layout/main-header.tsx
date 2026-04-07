@@ -180,7 +180,7 @@ export function MainFooter() {
         <p className="text-sm text-muted-foreground">
           {t('footer.builtBy')}{" "}
           <a
-            href="https://pxblx7.github.io/pablo-arroyo-product-manager/"
+            href="https://www.pxblx.com"
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold text-primary hover:underline"
