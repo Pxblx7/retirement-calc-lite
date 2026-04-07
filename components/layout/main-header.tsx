@@ -185,7 +185,7 @@ export function MainFooter() {
             rel="noopener noreferrer"
             className="font-bold text-primary hover:underline"
           >
-            Pablo Arroyo — Product Manager
+            {t('footer.authorName')}
           </a>
         </p>
 

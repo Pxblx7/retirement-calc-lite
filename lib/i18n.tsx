@@ -86,6 +86,7 @@ const translations = {
 
     // Footer
     "footer.builtBy": "Designed and built by",
+    "footer.authorName": "Pablo Arroyo — Product Manager",
     "footer.onlyEducational": "For educational purposes only.",
     "footer.fintualCTA": "Start creating your PPR with Fintual",
     "footer.kofiCTA": "Buy me a coffee ☕",
@@ -227,6 +228,7 @@ const translations = {
     "faq.a5": "Sí, pero si tu PPR es bajo el Artículo 151 y retiras antes de los 65 o para un fin distinto al retiro, te retendrán un 20% de ISR sobre el monto retirado. Con el Artículo 93, podrías no tener multas directas del SAT, pero pagarías impuestos ordinarios sobre los rendimientos.",
 
     "footer.builtBy": "Diseñado y desarrollado por",
+    "footer.authorName": "Pablo Arroyo — Product Manager",
     "footer.onlyEducational": "Solo para fines educativos.",
     "footer.fintualCTA": "Comienza a crear tu PPR con Fintual",
     "footer.kofiCTA": "Invítame un café ☕",
