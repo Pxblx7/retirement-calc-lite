@@ -1,8 +1,7 @@
 # 🏦 Mi Retiro MX
 ### Simulador de Retiro Personal para México | Personal Retirement Simulator
 
-> Project your future pension considering AFORE, PPR, and Private Savings. Includes a bilingual Blog & Financial Glossary for SEO, personalized AI-driven recommendations powered by Google Gemini, and clear legal-logic modeling for Mexican pensions (Ley 97). Founded in 2026 by Pablo Arroyo.
-
+> Project your future pension considering AFORE, PPR, and Private Savings. Includes a bilingual Blog & Financial Glossary for SEO, personalized AI-driven recommendations powered by Google Gemini, and clear legal-logic modeling for Mexican pensions (Ley 97).
 ---
 
 ## ✨ Key Features
