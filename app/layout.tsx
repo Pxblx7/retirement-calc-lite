@@ -29,7 +29,6 @@ export const metadata: Metadata = {
     title: 'Mi Retiro MX | Simulador de Jubilación y PPR',
     description: 'Calcula tu pensión AFORE y evalúa el impacto de un PPR en tu jubilación.'
   },
-  generator: 'v0.app',
   icons: {
     icon: [
       {
