@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import { MainHeader, MainFooter } from "@/components/layout/main-header"
 import { BlogClient } from "./blog-client"
 
+const BASE_URL = "https://miretiromx.pxblx.com"
+
 export function generateStaticParams() {
   return blogData.map((post) => ({
     slug: post.slug,
@@ -20,13 +22,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${post.es.title} | Mi Retiro MX`,
     description: post.es.description,
+    alternates: {
+      canonical: `${BASE_URL}/blog/${slug}`,
+    },
     openGraph: {
       title: post.es.title,
       description: post.es.description,
+      url: `${BASE_URL}/blog/${slug}`,
       type: "article",
       publishedTime: post.date,
       authors: [post.author],
-    }
+      locale: "es_MX",
+      siteName: "Mi Retiro MX",
+    },
   }
 }
 

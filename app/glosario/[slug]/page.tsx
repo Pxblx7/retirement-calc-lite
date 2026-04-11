@@ -3,6 +3,8 @@ import { notFound } from "next/navigation"
 import { MainHeader, MainFooter } from "@/components/layout/main-header"
 import { GlossaryClient } from "./glossary-client"
 
+const BASE_URL = "https://miretiromx.pxblx.com"
+
 export const dynamicParams = false // Only allow defined terms
 
 export function generateStaticParams() {
@@ -19,11 +21,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `¿Qué es ${termData.es.term}? Definición y significado | Mi Retiro MX`,
     description: termData.es.shortDefinition,
+    alternates: {
+      canonical: `${BASE_URL}/glosario/${slug}`,
+    },
     openGraph: {
       title: `¿Qué es ${termData.es.term}?`,
       description: termData.es.shortDefinition,
+      url: `${BASE_URL}/glosario/${slug}`,
       type: "article",
-    }
+      locale: "es_MX",
+      siteName: "Mi Retiro MX",
+    },
   }
 }
 

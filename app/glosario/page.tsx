@@ -5,11 +5,17 @@ import { GlossaryGridClient } from "./glossary-grid-client"
 export const metadata = {
   title: "Glosario de Retiro y AFOREs en México | Mi Retiro MX",
   description: "Diccionario financiero sobre el retiro en México. Aprende los conceptos clave como AFORE, PPR, UMA, Modalidad 40, Artículo 151 y más.",
+  alternates: {
+    canonical: "https://miretiromx.pxblx.com/glosario",
+  },
   openGraph: {
     title: "Glosario de Retiro y AFOREs en México",
     description: "Diccionario financiero sobre el retiro en México. Aprende los conceptos clave como AFORE, PPR, UMA, Modalidad 40, Artículo 151 y más.",
+    url: "https://miretiromx.pxblx.com/glosario",
     type: "website",
-  }
+    locale: "es_MX",
+    siteName: "Mi Retiro MX",
+  },
 }
 
 export default function GlossaryIndexPage() {
