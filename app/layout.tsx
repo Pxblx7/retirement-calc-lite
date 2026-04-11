@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   description: 'Simulador de retiro personal y calculadora de pensión para México. Compara tu AFORE, planea tu PPR (Plan Personal de Retiro) y asegura tu futuro financiero.',
   keywords: ['retiro méxico', 'simulador de retiro', 'ppr', 'afore', 'jubilación', 'plan personal de retiro', 'calculadora ppr', 'finanzas personales en méxico'],
   authors: [{ name: 'Mi Retiro MX' }],
+  verification: {
+    google: 'Ny0dHXsxxPlj-QctqQhK2DKbfT6-pO6E1jQLwSB33eM',
+  },
   openGraph: {
     title: 'Mi Retiro MX | Simulador de Jubilación y PPR',
     description: 'Descubre cuánto dinero necesitas para tu jubilación en México. Compara tu AFORE y evalúa el impacto de un PPR.',
