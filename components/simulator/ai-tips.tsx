@@ -60,7 +60,19 @@ export function AITips({ config, result, pprList, triggerFetch }: AITipsProps) {
           pprTaxArticles: pprList?.map(p => p.taxArticle ?? 'art151') ?? [],
         }),
       })
+      // Bail gracefully if the API returned a non-2xx (e.g. 400 invalid input,
+      // 429 rate-limited) or a body that isn't the expected Tip[] array.
+      // Without this guard, setTips would store an error object and the
+      // tips.map() in render would throw and crash the whole page.
+      if (!response.ok) {
+        console.error("AI tips request failed:", response.status)
+        return
+      }
       const data = await response.json()
+      if (!Array.isArray(data)) {
+        console.error("AI tips response is not an array:", data)
+        return
+      }
       setTips(data)
       setCooldown(30)
     } catch (error) {

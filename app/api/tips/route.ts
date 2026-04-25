@@ -9,9 +9,12 @@ import { z } from "zod";
 // coercion (e.g. passing a script string as "currentAge").
 
 const TipsBodySchema = z.object({
-  currentAge:          z.number().int().min(18).max(80),
-  retirementAge:       z.number().int().min(50).max(90),
-  planningHorizonAge:  z.number().int().min(60).max(110),
+  // Bounds match the simulator's UI validation in simulator-core.tsx (real-time
+  // validateAgesRealtime). Keep them aligned so any age the UI accepts also
+  // passes the API — early-retirement / FIRE scenarios included.
+  currentAge:          z.number().int().min(1).max(120),
+  retirementAge:       z.number().int().min(1).max(120),
+  planningHorizonAge:  z.number().int().min(1).max(110),
   inflation:           z.number().min(0).max(50),
   aforeBalance:        z.number().min(0).max(100_000_000),
   aforeMonthly:        z.number().min(0).max(500_000),

@@ -154,6 +154,11 @@
 **Solution:** Removed the `faqJsonLd` block from the global `SchemaMarkup` component (kept only `WebApplication`, which is correctly site-wide). Moved the `FAQPage` JSON-LD inline to `app/page.tsx` (the homepage), with content rewritten to mirror exactly the 5 Spanish `faq.q1`–`faq.q5` / `faq.a1`–`faq.a5` entries shown by `<FaqSection />`. Schema is Spanish-only (matches `<html lang="es">` and the SSR HTML Google indexes); the visible UI continues to toggle ES↔EN client-side as before. Verified the build emits `FAQPage` on `/index.html` only and `0` occurrences on every other generated page.  
 **Files:** `components/seo/schema-markup.tsx`, `app/page.tsx`
 
+**Bug 17 — White-Screen Crash After Simulating with Early Retirement (FIRE Scenarios)**  
+**Problem:** Hitting "Simular mi retiro" with `retirementAge < 50` produced a console `400` from `/api/tips` followed by `Uncaught TypeError: a.map is not a function` and an "Application error" white screen. Two compounding issues: (1) the `/api/tips` Zod schema declared `retirementAge: z.number().int().min(50).max(90)` while the simulator UI itself only required `currentAge < retirementAge < planningHorizonAge`, so any FIRE-style early retirement was rejected at the API; (2) `components/simulator/ai-tips.tsx` did `setTips(await response.json())` with no `response.ok` or `Array.isArray` check, so the 400's `{error, details}` body was stored as if it were `Tip[]`, and the subsequent `tips.map(...)` in render threw and crashed the whole page.  
+**Solution:** Loosened the Zod bounds in `app/api/tips/route.ts` to `currentAge` / `retirementAge` `[1, 120]` and `planningHorizonAge` `[1, 110]` — exactly matching the simulator's `validateAgesRealtime()`. Added defensive checks in `fetchTips()`: bail with a `console.error` if `!response.ok` or if the body isn't an array, so any future hiccup (rate limiting, validation, Gemini outage) degrades to "no tips shown" instead of crashing the app.  
+**Files:** `app/api/tips/route.ts`, `components/simulator/ai-tips.tsx`
+
 ### Improvements
 
 - **Navigation:** Header and Footer updated with Blog and Glossary links grouped under "Contenido" / "Content".
