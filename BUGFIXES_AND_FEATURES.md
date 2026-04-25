@@ -149,6 +149,11 @@
 **Solution:** Added `metadataBase: new URL('https://miretiromx.pxblx.com')` to the root layout. Converted `app/page.tsx` to a server component (Suspense + the already-`"use client"` `<SimulatorCore />` child still work) and exported `alternates.canonical: '/'`. Added `robots: { index: false, follow: false }` to `/login`. Split `/comparar` into a thin server `page.tsx` (carrying the `noindex` metadata) plus a new client child `comparar-client.tsx` holding the original UI. Verified the generated HTML emits `<link rel="canonical" href="https://miretiromx.pxblx.com"/>` and `<meta name="robots" content="noindex, nofollow">` on the right routes.  
 **Files:** `app/layout.tsx`, `app/page.tsx`, `app/login/page.tsx`, `app/comparar/page.tsx`, `app/comparar/comparar-client.tsx`
 
+**Bug 16 — Duplicate `FAQPage` Schema Across All URLs (GSC: "El campo 'FAQPage' está duplicado")**  
+**Problem:** GSC's rich results test flagged blog and other pages with `FAQPage` schema marked as duplicated. Root cause: `<SchemaMarkup />` is rendered in `app/layout.tsx`, so the same hardcoded `FAQPage` JSON-LD (3 PPR questions) was emitted on every URL of the site — homepage, blog posts, glossary, comparativas, login, comparar. Two compounding violations of Google's `FAQPage` policy: (1) schema must be unique per page, not site-wide; (2) schema content must match the visible FAQ on that page — but the visible `<FaqSection />` (shown only on routes rendering `<SimulatorCore />`) reads 5 different questions from `lib/i18n.tsx`, while the JSON-LD had 3 unrelated hardcoded ones.  
+**Solution:** Removed the `faqJsonLd` block from the global `SchemaMarkup` component (kept only `WebApplication`, which is correctly site-wide). Moved the `FAQPage` JSON-LD inline to `app/page.tsx` (the homepage), with content rewritten to mirror exactly the 5 Spanish `faq.q1`–`faq.q5` / `faq.a1`–`faq.a5` entries shown by `<FaqSection />`. Schema is Spanish-only (matches `<html lang="es">` and the SSR HTML Google indexes); the visible UI continues to toggle ES↔EN client-side as before. Verified the build emits `FAQPage` on `/index.html` only and `0` occurrences on every other generated page.  
+**Files:** `components/seo/schema-markup.tsx`, `app/page.tsx`
+
 ### Improvements
 
 - **Navigation:** Header and Footer updated with Blog and Glossary links grouped under "Contenido" / "Content".
