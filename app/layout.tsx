@@ -12,6 +12,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://miretiromx.pxblx.com'),
   title: 'Mi Retiro MX | Simulador de Jubilación y PPR',
   description: 'Simulador de retiro personal y calculadora de pensión para México. Compara tu AFORE, planea tu PPR (Plan Personal de Retiro) y asegura tu futuro financiero.',
   keywords: ['retiro méxico', 'simulador de retiro', 'ppr', 'afore', 'jubilación', 'plan personal de retiro', 'calculadora ppr', 'finanzas personales en méxico'],

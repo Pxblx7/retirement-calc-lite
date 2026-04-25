@@ -139,6 +139,16 @@
 **Solution:** Replaced with a ceiling-safe range assertion: `sum >= pprTotalMonthly` and `sum <= pprTotalMonthly + pprList.length`.  
 **Files:** `local_tests/lib/goal-tracker.test.ts`
 
+**Bug 14 — "Cargar en simulador" Reset Every PPR Account to $0**  
+**Problem:** Loading a saved scenario from `/comparar` restored AFORE and Ahorro Privado correctly but every PPR row showed $0. At save time, the simulator collapses the per-account `pprList` into a single aggregated `config.ppr` bucket via `aggregatePPRs()`. At load time the URL effect only called `setConfig(found.config)` and never touched `pprList`, so the panel kept showing the initial empty `[createDefaultPPR(0)]`.  
+**Solution:** Persist the original `pprList` alongside the scenario by embedding it inside the existing `config` JSONB blob — no DB schema migration. On read, hoist it back to a top-level `Scenario.pprList` field; on load, call `setPPRList(found.pprList)`. Added `pprListFromAggregated()` as a fallback for legacy scenarios saved before the fix, reconstructing a single PPR account from the aggregated bucket so the totals still match.  
+**Files:** `lib/scenario-types.ts`, `lib/ppr-helpers.ts`, `hooks/use-scenarios.ts`, `components/scenarios/save-scenario-button.tsx`, `components/simulator/simulator-core.tsx`
+
+**Bug 15 — Homepage Missing `<link rel="canonical">` (GSC: "Declarada como canónica: Nada")**  
+**Problem:** Google Search Console reported the homepage with no user-declared canonical. `app/page.tsx` was a `"use client"` component, which can't export `metadata`, and the root layout didn't define one either. `/comparar` and `/login` were similarly bare of SEO directives despite being non-indexable utility pages.  
+**Solution:** Added `metadataBase: new URL('https://miretiromx.pxblx.com')` to the root layout. Converted `app/page.tsx` to a server component (Suspense + the already-`"use client"` `<SimulatorCore />` child still work) and exported `alternates.canonical: '/'`. Added `robots: { index: false, follow: false }` to `/login`. Split `/comparar` into a thin server `page.tsx` (carrying the `noindex` metadata) plus a new client child `comparar-client.tsx` holding the original UI. Verified the generated HTML emits `<link rel="canonical" href="https://miretiromx.pxblx.com"/>` and `<meta name="robots" content="noindex, nofollow">` on the right routes.  
+**Files:** `app/layout.tsx`, `app/page.tsx`, `app/login/page.tsx`, `app/comparar/page.tsx`, `app/comparar/comparar-client.tsx`
+
 ### Improvements
 
 - **Navigation:** Header and Footer updated with Blog and Glossary links grouped under "Contenido" / "Content".

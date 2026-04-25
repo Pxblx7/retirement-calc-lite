@@ -5,6 +5,7 @@ import { MainHeader, MainFooter } from '@/components/layout/main-header'
 export const metadata = {
   title: 'Iniciar Sesión | RetiroMX',
   description: 'Accede a tus escenarios de retiro en la nube',
+  robots: { index: false, follow: false },
 }
 
 interface LoginPageProps {
