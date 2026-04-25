@@ -1,4 +1,5 @@
 import { SimConfig, SimulationResult } from './simulation'
+import { PPRConfig } from './ppr-helpers'
 
 // ─── Scenario Colors ─────────────────────────────────────────────────────────
 
@@ -50,6 +51,9 @@ export interface Scenario {
 
   /** Visual color slot — determined by position in the store (max 3) */
   color: ScenarioColor
+
+  /** Per-account PPR snapshot used to rehydrate the simulator's pprList on load. */
+  pprList?: PPRConfig[]
 }
 
 export const MAX_SCENARIOS = 3

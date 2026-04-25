@@ -11,6 +11,7 @@ import {
   MAX_SCENARIOS,
 } from '@/lib/scenario-types'
 import { SimConfig, SimulationResult, getDefaultConfig } from '@/lib/simulation'
+import { PPRConfig } from '@/lib/ppr-helpers'
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
 
@@ -28,13 +29,22 @@ function isStorageAvailable(): boolean {
 function sanitizeConfig(config: any): SimConfig {
   const defaultCfg = getDefaultConfig()
   if (!config || typeof config !== 'object') return defaultCfg
+  // pprList is persisted inside the config JSONB blob but isn't part of SimConfig
+  // (it's hoisted to the top-level Scenario.pprList field). Strip it here.
+  const { pprList: _pprList, ...rest } = config
   return {
     ...defaultCfg,
-    ...config,
-    afore: { ...defaultCfg.afore, ...(config.afore || {}) },
-    ppr: { ...defaultCfg.ppr, ...(config.ppr || {}) },
-    private: { ...defaultCfg.private, ...(config.private || {}) },
+    ...rest,
+    afore: { ...defaultCfg.afore, ...(rest.afore || {}) },
+    ppr: { ...defaultCfg.ppr, ...(rest.ppr || {}) },
+    private: { ...defaultCfg.private, ...(rest.private || {}) },
   }
+}
+
+function extractPPRList(rawConfig: any): PPRConfig[] | undefined {
+  const list = rawConfig?.pprList
+  if (!Array.isArray(list) || list.length === 0) return undefined
+  return list as PPRConfig[]
 }
 
 function sanitizeResult(result: any): SimulationResult | null {
@@ -54,6 +64,7 @@ function readLocalScenarios(): Scenario[] {
       ...s,
       config: sanitizeConfig(s.config),
       result: sanitizeResult(s.result),
+      pprList: extractPPRList(s.config),
     })) as Scenario[]
   } catch {
     return []
@@ -86,6 +97,7 @@ const mapSupabaseToScenario = (dbRow: any, index: number): Scenario => ({
   result: sanitizeResult(dbRow.result),
   createdAt: new Date(dbRow.created_at || Date.now()).getTime(),
   color: SCENARIO_COLORS[index] || SCENARIO_COLORS[0],
+  pprList: extractPPRList(dbRow.config),
 })
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -93,8 +105,16 @@ const mapSupabaseToScenario = (dbRow: any, index: number): Scenario => ({
 export interface UseScenariosReturn {
   scenarios: Scenario[]
   isLocalStorageAvailable: boolean
-  saveScenario: (name: string, config: SimConfig, result: SimulationResult | null) => Promise<Scenario | null>
-  updateScenario: (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => Promise<void>
+  saveScenario: (
+    name: string,
+    config: SimConfig,
+    result: SimulationResult | null,
+    pprList?: PPRConfig[],
+  ) => Promise<Scenario | null>
+  updateScenario: (
+    id: string,
+    partial: Partial<Pick<Scenario, 'name' | 'config' | 'result' | 'pprList'>>,
+  ) => Promise<void>
   deleteScenario: (id: string) => Promise<void>
   isFull: boolean
   isLoading: boolean
@@ -144,7 +164,10 @@ export function ScenariosProvider({ children }: { children: React.ReactNode }) {
               const insertData = local.map(s => ({
                 user_id: currentUser.id,
                 name: s.name,
-                config: s.config,
+                // Re-embed pprList into config so per-account state survives the cloud migration.
+                config: s.pprList && s.pprList.length > 0
+                  ? { ...s.config, pprList: s.pprList }
+                  : s.config,
                 result: s.result,
               }))
               const { data: migratedData, error: migrationError } = await supabase
@@ -198,11 +221,18 @@ export function ScenariosProvider({ children }: { children: React.ReactNode }) {
   // ─── Mutations ─────────────────────────────────────────────────────────────
 
   const saveScenario = useCallback(
-    async (name: string, config: SimConfig, result: SimulationResult | null): Promise<Scenario | null> => {
+    async (
+      name: string,
+      config: SimConfig,
+      result: SimulationResult | null,
+      pprList?: PPRConfig[],
+    ): Promise<Scenario | null> => {
       if (scenarios.length >= MAX_SCENARIOS) return null
 
       const slotIndex = scenarios.length
       const finalName = name.trim() || `Escenario ${slotIndex + 1}`
+      // Embed pprList inside the config JSONB so persistence survives without a schema change.
+      const persistedConfig = pprList && pprList.length > 0 ? { ...config, pprList } : config
 
       if (user) {
         const { data, error } = await supabase
@@ -210,7 +240,7 @@ export function ScenariosProvider({ children }: { children: React.ReactNode }) {
           .insert({
             user_id: user.id,
             name: finalName,
-            config,
+            config: persistedConfig,
             result,
           })
           .select()
@@ -220,7 +250,7 @@ export function ScenariosProvider({ children }: { children: React.ReactNode }) {
           console.error('Error saving to Supabase:', error)
           return null
         }
-        
+
         const newCloudScenario = mapSupabaseToScenario(data, slotIndex)
         setScenarios(prev => [...prev, newCloudScenario])
         return newCloudScenario
@@ -232,10 +262,13 @@ export function ScenariosProvider({ children }: { children: React.ReactNode }) {
           result,
           createdAt: Date.now(),
           color: SCENARIO_COLORS[slotIndex],
+          pprList,
         }
-        const updated = [...scenarios, newScenario]
+        // Persist with pprList embedded inside config so readLocalScenarios picks it up on reload.
+        const persisted: Scenario = { ...newScenario, config: persistedConfig }
+        const updated = [...scenarios, persisted]
         if (isLocalStorageAvailable) writeLocalScenarios(updated)
-        setScenarios(updated)
+        setScenarios([...scenarios, newScenario])
         return newScenario
       }
     },
@@ -243,20 +276,42 @@ export function ScenariosProvider({ children }: { children: React.ReactNode }) {
   )
 
   const updateScenario = useCallback(
-    async (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result'>>) => {
+    async (id: string, partial: Partial<Pick<Scenario, 'name' | 'config' | 'result' | 'pprList'>>) => {
+      // If config and/or pprList are part of this update, embed pprList inside the config JSONB
+      // so persistence rules stay consistent with saveScenario.
+      const existing = scenarios.find((s) => s.id === id)
+      const nextConfig = partial.config ?? existing?.config
+      const nextPPRList = 'pprList' in partial ? partial.pprList : existing?.pprList
+      const dbPartial: Record<string, unknown> = {}
+      if (partial.name !== undefined) dbPartial.name = partial.name
+      if (partial.result !== undefined) dbPartial.result = partial.result
+      if (partial.config !== undefined || 'pprList' in partial) {
+        dbPartial.config = nextPPRList && nextPPRList.length > 0
+          ? { ...(nextConfig as SimConfig), pprList: nextPPRList }
+          : nextConfig
+      }
+
       if (user) {
         const { error } = await supabase
           .from('scenarios')
-          .update(partial)
+          .update(dbPartial)
           .eq('id', id)
-          
+
         if (!error) {
           setScenarios(prev => prev.map(s => s.id === id ? { ...s, ...partial } : s))
         }
       } else {
-        const updated = scenarios.map((s) => (s.id === id ? { ...s, ...partial } : s))
-        if (isLocalStorageAvailable) writeLocalScenarios(updated)
-        setScenarios(updated)
+        // For localStorage we re-embed pprList in config so a fresh read round-trips correctly.
+        const persistedScenarios = scenarios.map((s) => {
+          if (s.id !== id) return s
+          const merged: Scenario = { ...s, ...partial }
+          const embed = merged.pprList && merged.pprList.length > 0
+            ? { ...merged.config, pprList: merged.pprList }
+            : merged.config
+          return { ...merged, config: embed as SimConfig }
+        })
+        if (isLocalStorageAvailable) writeLocalScenarios(persistedScenarios)
+        setScenarios(scenarios.map((s) => (s.id === id ? { ...s, ...partial } : s)))
       }
     },
     [scenarios, isLocalStorageAvailable, user, supabase]

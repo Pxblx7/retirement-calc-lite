@@ -16,7 +16,7 @@ import {
 import { FaqSection } from "@/components/simulator/faq-section"
 import { useI18n, type Locale } from "@/lib/i18n"
 import { AuthStatus } from "@/components/auth/auth-status"
-import { aggregatePPRs, createDefaultPPR, type PPRConfig } from "@/lib/ppr-helpers"
+import { aggregatePPRs, createDefaultPPR, pprListFromAggregated, type PPRConfig } from "@/lib/ppr-helpers"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Sun, Moon, Monitor, Globe, Calculator, BarChart3 } from "lucide-react"
@@ -58,6 +58,18 @@ export function SimulatorCore({ seoTemplate }: SimulatorCoreProps) {
   const [editingScenarioId, setEditingScenarioId] = useState<string | null>(null)
   const [editingScenarioName, setEditingScenarioName] = useState<string | null>(null)
 
+  // F1 – Multiple PPR accounts
+  // Initialize with SEO template's PPRs if provided, otherwise default
+  const [pprList, setPPRList] = useState<PPRConfig[]>(() => {
+    if (seoTemplate?.initialPPRs && seoTemplate.initialPPRs.length > 0) {
+      return seoTemplate.initialPPRs.map(p => ({
+        ...createDefaultPPR(0),
+        ...p
+      }))
+    }
+    return [createDefaultPPR(0)]
+  })
+
   // Load scenario from URL param (?scenario=<id>)
   // Uses the hook's scenarios array so it works for BOTH anonymous users
   // (localStorage) and logged-in users (Supabase). The old code read
@@ -72,22 +84,17 @@ export function SimulatorCore({ seoTemplate }: SimulatorCoreProps) {
 
     scenarioFromUrlLoaded.current = true
     setConfig(found.config)
+    // Rehydrate the per-account PPR list. Legacy scenarios (saved before pprList was
+    // persisted) fall back to a single account reconstructed from the aggregated bucket.
+    if (found.pprList && found.pprList.length > 0) {
+      setPPRList(found.pprList)
+    } else {
+      setPPRList(pprListFromAggregated(found.config.ppr))
+    }
     setResult(found.result)
     setEditingScenarioId(found.id)
     setEditingScenarioName(found.name)
   }, [searchParams, scenarios, isLoading])
-
-  // F1 – Multiple PPR accounts
-  // Initialize with SEO template's PPRs if provided, otherwise default
-  const [pprList, setPPRList] = useState<PPRConfig[]>(() => {
-    if (seoTemplate?.initialPPRs && seoTemplate.initialPPRs.length > 0) {
-      return seoTemplate.initialPPRs.map(p => ({
-        ...createDefaultPPR(0),
-        ...p
-      }))
-    }
-    return [createDefaultPPR(0)]
-  })
 
   // F2 – Loading spinner
   const [isSimulating, setIsSimulating] = useState(false)
@@ -250,6 +257,7 @@ export function SimulatorCore({ seoTemplate }: SimulatorCoreProps) {
                       <SaveScenarioButton
                         config={config}
                         result={result}
+                        pprList={pprList}
                         editingScenarioId={editingScenarioId}
                       />
                     }

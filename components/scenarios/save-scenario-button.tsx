@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { BookmarkPlus, BarChart3, Check } from 'lucide-react'
 import { useScenarios } from '@/hooks/use-scenarios'
 import { SimConfig, SimulationResult } from '@/lib/simulation'
+import { PPRConfig } from '@/lib/ppr-helpers'
 import { MAX_SCENARIOS } from '@/lib/scenario-types'
 import Link from 'next/link'
 import { useI18n } from '@/lib/i18n'
@@ -13,6 +14,8 @@ import { useI18n } from '@/lib/i18n'
 interface SaveScenarioButtonProps {
   config: SimConfig
   result: SimulationResult
+  /** Per-account PPR snapshot — persisted so "Cargar en simulador" can rehydrate the UI. */
+  pprList: PPRConfig[]
   /** If set, the button becomes "Update scenario" mode */
   editingScenarioId?: string | null
 }
@@ -20,6 +23,7 @@ interface SaveScenarioButtonProps {
 export function SaveScenarioButton({
   config,
   result,
+  pprList,
   editingScenarioId,
 }: SaveScenarioButtonProps) {
   const { scenarios, saveScenario, updateScenario, isFull } = useScenarios()
@@ -49,7 +53,7 @@ export function SaveScenarioButton({
   const handleOpen = async () => {
     if (isEditing) {
       setIsSaving(true)
-      await updateScenario(editingScenarioId!, { config, result })
+      await updateScenario(editingScenarioId!, { config, result, pprList })
       setIsSaving(false)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -64,7 +68,7 @@ export function SaveScenarioButton({
 
   const handleSave = async () => {
     setIsSaving(true)
-    const scenario = await saveScenario(name || defaultName, config, result)
+    const scenario = await saveScenario(name || defaultName, config, result, pprList)
     setIsSaving(false)
     if (!scenario) {
       setIsOpen(false)

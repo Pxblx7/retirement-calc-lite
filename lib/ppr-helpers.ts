@@ -69,6 +69,25 @@ export function aggregatePPRs(pprs: PPRConfig[]): SimConfig['ppr'] {
   }
 }
 
+// ─── Inverse / Rehydration ───────────────────────────────────────────────────
+
+/**
+ * Builds a single PPR account from an aggregated SimConfig['ppr'] bucket.
+ * Used as a fallback when loading legacy scenarios saved before the per-account
+ * pprList was persisted alongside the scenario.
+ */
+export function pprListFromAggregated(aggregated: SimConfig['ppr']): PPRConfig[] {
+  return [{
+    label: 'PPR 1',
+    initialBalance: aggregated.initialBalance,
+    monthlyContribution: aggregated.monthlyContribution,
+    annualReturn: aggregated.annualReturn,
+    satRefund: aggregated.satRefund,
+    taxArticle: 'art151',
+    annualContributionIncrement: aggregated.annualContributionIncrement ?? 0,
+  }]
+}
+
 // ─── Per-account yearly detail ────────────────────────────────────────────────
 
 /** PMT annuity formula — mirrors simulation.ts */
