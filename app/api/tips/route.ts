@@ -60,9 +60,10 @@ function isRateLimited(ip: string): boolean {
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-// gemini-3.1-flash-lite-preview: 500 RPD free, fast and lightweight
+// gemini-3.1-flash-lite (GA): 500 RPD free, fast and lightweight.
+// The -preview alias retires 2026-05-25; GA uses the same architecture.
 const model = genAI.getGenerativeModel({
-  model: "gemini-3.1-flash-lite-preview",
+  model: "gemini-3.1-flash-lite",
 });
 
 const currentYear = new Date().getFullYear();
